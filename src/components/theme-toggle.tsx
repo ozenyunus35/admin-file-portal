@@ -1,0 +1,26 @@
+"use client";
+
+import { Moon, Sun } from "lucide-react";
+import { useSyncExternalStore } from "react";
+
+function subscribe(cb: () => void) {
+  const obs = new MutationObserver(cb);
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+  return () => obs.disconnect();
+}
+
+export function ThemeToggle() {
+  const dark = useSyncExternalStore(subscribe, () => document.documentElement.classList.contains("dark"), () => false);
+  const toggle = () => {
+    const next = !dark;
+    document.documentElement.classList.toggle("dark", next);
+    try {
+      localStorage.setItem("atlas:theme", next ? "dark" : "light");
+    } catch {}
+  };
+  return (
+    <button onClick={toggle} className="rounded-lg p-2 text-muted hover:bg-surface-2 hover:text-text" aria-label={dark ? "Switch to light theme" : "Switch to dark theme"}>
+      {dark ? <Sun className="size-5" /> : <Moon className="size-5" />}
+    </button>
+  );
+}

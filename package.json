@@ -1,0 +1,36 @@
+{
+  "name": "admin-file-portal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "serve": "node scripts/serve.mjs"
+  },
+  "dependencies": {
+    "lucide-react": "1.63.0",
+    "next": "16.4.3",
+    "pdfjs-dist": "5.7.284",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "recharts": "3.10.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "20.19.43",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  },
+  "description": "Admin dashboard and client file portal demo built with Next.js, running fully in the browser with a mock backend.",
+  "license": "MIT"
+}
