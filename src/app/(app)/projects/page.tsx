@@ -4,8 +4,7 @@ import { CalendarDays, Download, FolderKanban, KanbanSquare, Table2 } from "luci
 import { useState } from "react";
 import { DataTable, type Column } from "@/components/data-table";
 import { useToast } from "@/components/toast";
-import { STATUS_COLOR } from "@/components/uploads-chart";
-import { Avatar, Badge, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, ProgressRing, STATUS_TONE, cx, inputClass } from "@/components/ui";
+import { Avatar, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, ProgressRing, StatusIcon, cx, inputClass } from "@/components/ui";
 import { log, updateProject } from "@/lib/api";
 import { downloadCsv, toCsv } from "@/lib/csv";
 import { formatDate, formatMoney } from "@/lib/format";
@@ -15,64 +14,56 @@ import type { Project, ProjectStatus } from "@/lib/types";
 
 type Row = Project & { company: string; owner: string };
 
-const DAY = 86_400_000;
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 function Board({ rows, isAdmin, onOpen }: { rows: Row[]; isAdmin: boolean; onOpen?: (p: Project) => void }) {
   const [now] = useState(() => Date.now());
   return (
     <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-      <div className="grid min-w-[1100px] grid-cols-5 gap-3">
-        {PROJECT_STATUS_ORDER.map((status, ci) => {
+      <div className="grid min-w-[1080px] grid-cols-5 gap-3">
+        {PROJECT_STATUS_ORDER.map((status) => {
           const list = rows.filter((r) => r.status === status).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
-          const total = list.reduce((s, p) => s + p.budget, 0);
           return (
-            <section key={status} aria-label={`${status} projects`} className="stagger flex flex-col rounded-2xl border border-border bg-surface-2/40 p-2" style={{ "--d": `${ci * 60}ms` } as React.CSSProperties}>
-              <header className="flex items-center gap-2 px-2 pt-1.5 pb-3">
-                <span className="size-2 rounded-full" style={{ background: STATUS_COLOR[status] }} aria-hidden />
-                <h2 className="text-sm font-semibold capitalize">{status.replace("-", " ")}</h2>
-                <span className="rounded-md bg-surface-3 px-1.5 font-mono text-[11px] text-muted">{list.length}</span>
-                <span className="ml-auto font-mono text-[11px] text-muted">{formatMoney(total)}</span>
+            <section key={status} aria-label={`${status} projects`} className="flex min-w-0 flex-col">
+              <header className="flex h-9 items-center gap-2 px-1">
+                <StatusIcon status={status} />
+                <h2 className="font-medium capitalize">{status.replace("-", " ")}</h2>
+                <span className="text-muted tabular-nums">{list.length}</span>
+                <span className="ml-auto text-xs text-faint tabular-nums">{formatMoney(list.reduce((s, p) => s + p.budget, 0))}</span>
               </header>
-              <ul className="flex flex-1 flex-col gap-2">
-                {list.length === 0 && <li className="rounded-xl border border-dashed border-border px-3 py-8 text-center text-xs text-muted">Nothing here</li>}
-                {list.map((p, i) => {
-                  const days = Math.round((Date.parse(p.dueDate) - now) / DAY);
-                  const late = days < 0 && p.status !== "completed";
+              <ul className="flex flex-1 flex-col gap-1.5 rounded-lg bg-surface-2/60 p-1.5">
+                {list.length === 0 && <li className="px-3 py-8 text-center text-xs text-faint">No projects</li>}
+                {list.map((p) => {
+                  const late = Date.parse(p.dueDate) < now && p.status !== "completed";
                   const body = (
                     <>
-                      <span className="flex items-start justify-between gap-2">
-                        <span className="min-w-0">
-                          <span className="block text-sm leading-snug font-medium">{p.name}</span>
+                      <span className="flex items-start gap-2">
+                        <span className="min-w-0 flex-1">
+                          <span className="block leading-snug font-medium">{p.name}</span>
                           {isAdmin && <span className="mt-0.5 block truncate text-xs text-muted">{p.company}</span>}
                         </span>
-                        <ProgressRing value={p.progress} label={`${p.name} progress`} size={38} stroke={3.5} />
-                      </span>
-                      <span className="mt-3 flex items-center justify-between gap-2 text-xs">
-                        <span className={cx("inline-flex items-center gap-1 font-mono text-[11px]", late ? "text-danger" : "text-muted")}>
-                          <CalendarDays className="size-3" aria-hidden />
-                          {late ? `${-days}d late` : formatDate(p.dueDate).replace(/, \d{4}$/, "")}
+                        <span title={p.owner}>
+                          <Avatar name={p.owner} size={20} />
                         </span>
-                        <span className="flex items-center gap-2">
-                          <span className="font-mono text-[11px] text-muted">{formatMoney(p.budget)}</span>
-                          <span title={p.owner}>
-                            <Avatar name={p.owner} size={22} />
-                          </span>
+                      </span>
+                      <span className="mt-3 flex items-center gap-2 text-xs text-muted">
+                        <ProgressRing value={p.progress} label={`${p.name} progress`} size={14} />
+                        <span className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-px tabular-nums">
+                          <CalendarDays className={cx("size-3", late && "text-danger")} aria-hidden />
+                          <span className={late ? "text-danger" : ""}>{shortDate(p.dueDate)}</span>
                         </span>
                       </span>
                     </>
                   );
-                  const cls = "stagger block w-full rounded-xl border border-border bg-surface p-3 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:border-border-strong";
-                  const style = { "--d": `${ci * 60 + 120 + i * 40}ms` } as React.CSSProperties;
+                  const cls = "block w-full rounded-md border border-border bg-surface p-2.5 text-left shadow-card transition-colors duration-100 hover:border-border-strong";
                   return (
                     <li key={p.id}>
                       {onOpen ? (
-                        <button onClick={() => onOpen(p)} className={cls} style={style} aria-label={`Update ${p.name}${isAdmin ? `, ${p.company}` : ""}`}>
+                        <button onClick={() => onOpen(p)} className={cls} aria-label={`Update ${p.name}${isAdmin ? `, ${p.company}` : ""}`}>
                           {body}
                         </button>
                       ) : (
-                        <div className={cls} style={style}>
-                          {body}
-                        </div>
+                        <div className={cls}>{body}</div>
                       )}
                     </li>
                   );
@@ -119,7 +110,12 @@ export default function ProjectsPage() {
         </div>
       ),
     },
-    { key: "status", header: "Status", sortable: true, sortValue: (p) => PROJECT_STATUS_ORDER.indexOf(p.status), render: (p) => <Badge tone={STATUS_TONE[p.status]}>{p.status}</Badge> },
+    { key: "status", header: "Status", sortable: true, sortValue: (p) => PROJECT_STATUS_ORDER.indexOf(p.status), render: (p) => (
+        <span className="inline-flex items-center gap-2 whitespace-nowrap capitalize">
+          <StatusIcon status={p.status} />
+          {p.status.replace("-", " ")}
+        </span>
+      ) },
     {
       key: "progress",
       header: "Progress",
@@ -161,14 +157,14 @@ export default function ProjectsPage() {
         title="Projects"
         description={isAdmin ? `${rows.length} client projects, ${formatMoney(rows.filter((p) => p.status !== "completed").reduce((s, p) => s + p.budget, 0))} in open budget. Click one to update it.` : "Projects for your company."}
         actions={
-          <div role="group" aria-label="View" className="inline-flex rounded-lg border border-border bg-surface p-0.5 shadow-[var(--highlight)]">
+          <div role="group" aria-label="View" className="inline-flex h-8 items-center rounded-md border border-border bg-surface p-0.5 shadow-card">
             {(
               [
                 ["board", "Board", KanbanSquare],
                 ["table", "Table", Table2],
               ] as const
             ).map(([v, label, Icon]) => (
-              <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={cx("inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all", view === v ? "bg-surface-3 text-text shadow-sm" : "text-muted hover:text-text")}>
+              <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={cx("inline-flex h-full items-center gap-1.5 rounded-[5px] px-2.5 text-xs font-medium transition-colors", view === v ? "bg-surface-3 text-text" : "text-muted hover:text-text")}>
                 <Icon className="size-3.5" aria-hidden /> {label}
               </button>
             ))}

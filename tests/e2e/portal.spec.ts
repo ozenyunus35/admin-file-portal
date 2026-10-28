@@ -28,7 +28,7 @@ test("login page offers both demo roles and rejects unknown emails", async ({ pa
 test("admin dashboard shows KPIs, chart and activity", async ({ page }) => {
   await signIn(page, "admin");
   for (const kpi of ["Active clients", "Active users", "Open projects", "Uploads, 30 days"]) await expect(page.getByText(kpi)).toBeVisible();
-  await expect(page.locator(".recharts-area-area").first()).toBeVisible();
+  await expect(page.locator(".recharts-bar-rectangle").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Recent activity" })).toBeVisible();
   await expect(page.getByText("Maya Chen signed in").or(page.getByText(/Maya Chen\s+signed in/)).first()).toBeVisible();
 });
@@ -98,7 +98,8 @@ test("admin updates a project and sees it in the activity log", async ({ page })
 
 test("client only sees their own company and no admin pages", async ({ page }) => {
   await signIn(page, "client");
-  await expect(page.getByRole("heading", { name: "Welcome back, Jordan" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Dashboard" })).toBeVisible();
+  await expect(page.getByText("Brightline Dental Group · Starter plan")).toBeVisible();
   if (isMobile(page)) await page.getByRole("button", { name: "Open menu" }).click();
   const menu = page.getByRole("navigation", { name: "Main" });
   await expect(menu.getByRole("link", { name: "Users" })).toHaveCount(0);

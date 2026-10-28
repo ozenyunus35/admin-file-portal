@@ -24,11 +24,11 @@ You can also sign in with any seeded email, for example `daniel@atlasportal.exam
 ## Features
 
 **Admin**
-- Dashboard: animated KPI cards with sparklines and week-over-week change, uploads and sign-ins chart with a
-  7/14/30-day switch, projects-by-status donut, projects due soon, storage per client, activity timeline.
+- Dashboard: metric strip with sparklines and week-over-week change, daily uploads and sign-ins with a
+  7/14/30-day switch, projects by status, projects due soon (overdue flagged), storage per client, recent activity.
 - Users table with search, filters (role, status, company), sortable columns, pagination, invite, edit, disable/enable, and CSV export of the filtered rows.
 - Clients with plan and storage quota; changing the plan changes the quota.
-- Projects as a Kanban board (one column per status, progress rings, due dates) or a sortable table, with
+- Projects as a board (one column per status, progress, owner, due date) or a sortable table, with
   status, progress and owner editing and CSV export.
 - Activity log (audit trail) of sign-ins, edits, uploads, downloads, shares and exports, with CSV export.
 
@@ -42,7 +42,8 @@ You can also sign in with any seeded email, for example `daniel@atlasportal.exam
 
 **Everywhere**
 - Command palette (⌘K / Ctrl+K): search pages, clients, projects, people and files, keyboard navigation.
-- Notifications panel, page transitions and micro-interactions that respect `prefers-reduced-motion`.
+- Notifications panel and short transitions that respect `prefers-reduced-motion`.
+- Restrained product UI: neutral greys with one accent colour, Inter, compact 13px base size, status glyphs.
 - Role-based access: clients never see admin pages or other companies' data; the mock API enforces it too.
 - Responsive layout with a mobile menu, designed dark and light themes, keyboard-friendly dialogs and tables
   (`aria-sort`, labelled controls, focus rings), empty, loading and error states.

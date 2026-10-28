@@ -73,7 +73,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
 
   return (
     <div>
-      <div className="flex flex-col gap-2 border-b border-border p-3 sm:p-4 md:flex-row md:items-center">
+      <div className="flex flex-col gap-2 border-b border-border p-3 md:flex-row md:items-center">
         {searchKeys && (
           <div className="relative md:w-72">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
@@ -100,7 +100,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
                 setFilterValues((v) => ({ ...v, [f.key]: e.target.value }));
                 setPage(1);
               }}
-              className="h-10 rounded-lg border border-border bg-surface px-3 pr-8 text-sm shadow-[var(--highlight)] transition-colors hover:border-border-strong focus:border-accent focus:outline-none"
+              className="h-8 rounded-md border border-border bg-surface px-2.5 pr-7 text-[13px] shadow-card transition-colors hover:border-border-strong focus:border-accent focus:outline-none"
             >
               <option value="">{f.label}: all</option>
               {f.options.map((o) => (
@@ -118,11 +118,11 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
         empty
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left">
             <caption className="sr-only">
               {label}, {result.total} rows{sort ? `, sorted by ${columns.find((c) => c.key === sort.key)?.header} ${sort.dir === "asc" ? "ascending" : "descending"}` : ""}
             </caption>
-            <thead className="bg-surface-2/50 font-mono text-[10.5px] tracking-[0.08em] text-muted uppercase">
+            <thead className="text-xs text-muted">
               <tr>
                 {columns.map((c) => {
                   const active = sort?.key === c.key;
@@ -131,12 +131,12 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
                       key={c.key}
                       scope="col"
                       aria-sort={active ? (sort.dir === "asc" ? "ascending" : "descending") : undefined}
-                      className={cx("px-3 py-2.5 font-medium whitespace-nowrap sm:px-4", c.hideOnMobile && (c.hideOnMobile === "xl" ? "hidden xl:table-cell" : "hidden md:table-cell"), c.className)}
+                      className={cx("h-9 border-b border-border px-3 font-medium whitespace-nowrap sm:px-4", c.hideOnMobile && (c.hideOnMobile === "xl" ? "hidden xl:table-cell" : "hidden md:table-cell"), c.className)}
                     >
                       {c.sortable ? (
-                        <button onClick={() => toggleSort(c.key)} className="-mx-1 inline-flex items-center gap-1 rounded px-1 tracking-[0.08em] uppercase transition-colors hover:text-text">
+                        <button onClick={() => toggleSort(c.key)} className="-mx-1 inline-flex items-center gap-1 rounded px-1 transition-colors hover:text-text">
                           {c.header}
-                          {active ? sort.dir === "asc" ? <ArrowUp className="size-3.5" aria-hidden /> : <ArrowDown className="size-3.5" aria-hidden /> : <ChevronsUpDown className="size-3.5 opacity-50" aria-hidden />}
+                          {active ? sort.dir === "asc" ? <ArrowUp className="size-3" aria-hidden /> : <ArrowDown className="size-3" aria-hidden /> : <ChevronsUpDown className="size-3 opacity-40" aria-hidden />}
                         </button>
                       ) : (
                         c.header
@@ -147,17 +147,16 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {result.rows.map((row, i) => (
+              {result.rows.map((row) => (
                 <tr
                   key={rowKey(row)}
-                  style={{ "--d": `${i * 25}ms` } as React.CSSProperties}
-                  className={cx("stagger transition-colors hover:bg-accent-soft/40", onRowClick && "cursor-pointer")}
+                  className={cx("transition-colors duration-75 hover:bg-surface-2", onRowClick && "cursor-pointer")}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   onKeyDown={onRowClick ? (e) => e.key === "Enter" && e.target === e.currentTarget && onRowClick(row) : undefined}
                   tabIndex={onRowClick ? 0 : undefined}
                 >
                   {columns.map((c) => (
-                    <td key={c.key} className={cx("px-3 py-3.5 align-middle sm:px-4", c.hideOnMobile && (c.hideOnMobile === "xl" ? "hidden xl:table-cell" : "hidden md:table-cell"), c.className)}>
+                    <td key={c.key} className={cx("h-11 px-3 align-middle sm:px-4", c.hideOnMobile && (c.hideOnMobile === "xl" ? "hidden xl:table-cell" : "hidden md:table-cell"), c.className)}>
                       {c.render ? c.render(row) : String(row[c.key] ?? "")}
                     </td>
                   ))}
@@ -168,18 +167,18 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm text-muted">
-        <p aria-live="polite" className="font-mono text-xs">
+      <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5 text-xs text-muted">
+        <p aria-live="polite" className="tabular-nums">
           {from}–{to} of {result.total}
         </p>
         <div className="flex items-center gap-1">
-          <button onClick={() => setPage(result.page - 1)} disabled={result.page <= 1} className="rounded-lg border border-border p-1.5 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Previous page">
+          <button onClick={() => setPage(result.page - 1)} disabled={result.page <= 1} className="rounded-md border border-border p-1 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Previous page">
             <ChevronLeft className="size-4" />
           </button>
-          <span className="px-2 font-mono text-xs tabular-nums">
+          <span className="px-2 tabular-nums">
             Page {result.page} of {result.pageCount}
           </span>
-          <button onClick={() => setPage(result.page + 1)} disabled={result.page >= result.pageCount} className="rounded-lg border border-border p-1.5 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Next page">
+          <button onClick={() => setPage(result.page + 1)} disabled={result.page >= result.pageCount} className="rounded-md border border-border p-1 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Next page">
             <ChevronRight className="size-4" />
           </button>
         </div>

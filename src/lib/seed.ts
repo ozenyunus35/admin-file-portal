@@ -18,7 +18,7 @@ import type {
  * `now` always gives the same data.
  */
 
-export const STATE_VERSION = 2;
+export const STATE_VERSION = 3;
 export const DEMO_ADMIN_ID = "u-admin-1";
 export const DEMO_CLIENT_ID = "u-client-demo";
 
@@ -263,7 +263,7 @@ export function createSeed(now: Date = new Date(), seed = 20261028): DemoState {
         : action === "project.update"
           ? pick(rng, projects.filter((p) => p.companyId === companyId)).name
           : action === "user.update"
-            ? pick(rng, users.filter((u) => u.companyId === companyId)).name
+            ? pick(rng, users.filter((u) => u.companyId === companyId && u.id !== actor.id).concat(users.filter((u) => u.role === "client" && u.id !== actor.id))).name
             : pick(rng, files.filter((f) => f.companyId === companyId).concat(files)).name;
     activity.push({ id: "", at: iso(t - recentOffset(rng, t, 29)), actorId: actor.id, action, target, companyId: action === "auth.login" ? actor.companyId : companyId });
   }

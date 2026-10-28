@@ -88,9 +88,9 @@ function DropZone({ disabled, onFiles }: { disabled?: boolean; onFiles: (files: 
         if (!disabled && e.dataTransfer.files.length) onFiles(e.dataTransfer.files);
       }}
       data-testid="dropzone"
-      className={cx("flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors", over ? "border-accent bg-accent-soft/40" : "border-border bg-surface")}
+      className={cx("flex flex-col items-center justify-center rounded-lg border border-dashed px-4 py-7 text-center transition-colors", over ? "border-accent bg-accent-soft" : "border-border-strong bg-surface")}
     >
-      <UploadCloud className={cx("size-8", over ? "text-accent" : "text-muted")} aria-hidden />
+      <UploadCloud className={cx("size-5", over ? "text-accent" : "text-faint")} aria-hidden />
       <p className="mt-2 text-sm font-medium">
         <span className="hidden sm:inline">Drag and drop files here, or </span>
         <button type="button" onClick={() => input.current?.click()} disabled={disabled} className="text-accent underline underline-offset-2 disabled:opacity-50">
@@ -280,7 +280,7 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
         <nav aria-label="Folders" className="min-w-0">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-xs font-medium tracking-wide text-muted uppercase">Folders</h2>
+            <h2 className="text-xs font-medium text-faint">Folders</h2>
             <button onClick={() => (setNewFolder(""), setFolderError(undefined))} className="rounded-md p-1 text-muted hover:bg-surface-2 hover:text-text" aria-label="New folder">
               <FolderPlus className="size-4" />
             </button>

@@ -48,10 +48,10 @@ export default function SharePage() {
             <EmptyState icon={LinkIcon} title="Link unavailable" text={result.error} action={<Link href="/" className="text-sm font-medium text-accent underline">Go to Atlas Portal</Link>} />
           ) : (
             <div className="p-6 text-center">
-              <div className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-surface-2">
+              <div className="mx-auto mb-4 grid size-12 place-items-center rounded-lg border border-border bg-surface-2">
                 <FileIcon file={result.file} className="size-7" />
               </div>
-              <p className="text-xs tracking-wide text-muted uppercase">{company?.name} shared a file</p>
+              <p className="text-xs text-muted">{company?.name} shared a file</p>
               <h1 className="mt-1 text-lg font-semibold break-words">{result.file.name}</h1>
               <p className="mt-1 text-sm text-muted">
                 {formatBytes(result.file.size)} · link expires {formatDate(result.share.expiresAt)}

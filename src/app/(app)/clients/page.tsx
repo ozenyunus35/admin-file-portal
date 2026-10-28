@@ -30,15 +30,15 @@ export default function ClientsPage() {
           <EmptyState icon={Building2} title="No clients match" text="Try another name, industry or country." />
         </Card>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {list.map((c, i) => {
+        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {list.map((c) => {
             const used = storageUsed(state, c.id);
             return (
-              <li key={c.id} className="stagger" style={{ "--d": `${i * 50}ms` } as React.CSSProperties}>
-                <Card className="flex h-full flex-col p-0 transition-all duration-300 hover:-translate-y-0.5 hover:border-border-strong">
-                  <button onClick={() => setOpenId(c.id)} className="flex flex-1 flex-col rounded-2xl p-5 text-left" aria-label={`Open ${c.name}`}>
+              <li key={c.id}>
+                <Card className="flex h-full flex-col p-0 transition-colors duration-100 hover:border-border-strong">
+                  <button onClick={() => setOpenId(c.id)} className="flex flex-1 flex-col rounded-lg p-4 text-left" aria-label={`Open ${c.name}`}>
                     <div className="flex w-full items-start gap-3">
-                      <Avatar name={c.name} size={40} />
+                      <Avatar name={c.name} size={32} square />
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{c.name}</p>
                         <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
