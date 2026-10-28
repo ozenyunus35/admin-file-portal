@@ -6,7 +6,7 @@ import { Suspense, useRef, useState } from "react";
 import { DataTable, type Column } from "@/components/data-table";
 import { FileIcon, PreviewDialog, ShareDialog, useDownload } from "@/components/file-dialogs";
 import { useToast } from "@/components/toast";
-import { Button, Card, EmptyState, Field, Meter, Modal, PageHeader, Spinner, cx, inputClass } from "@/components/ui";
+import { Avatar, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, Spinner, cx, inputClass } from "@/components/ui";
 import { ApiError, MAX_UPLOAD_BYTES, addFile, canDeleteFile, checkUpload, createFolder, deleteFile, storageUsed, uniqueName } from "@/lib/api";
 import { deleteBlob, putBlob } from "@/lib/blobs";
 import { formatBytes, formatDateTime } from "@/lib/format";
@@ -183,7 +183,9 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
       sortable: true,
       render: (f) => (
         <button onClick={() => setPreviewing(f)} className="flex max-w-full items-center gap-3 text-left hover:text-accent">
-          <FileIcon file={f} />
+          <span className="grid size-9 shrink-0 place-items-center rounded-lg border border-border bg-surface-2">
+            <FileIcon file={f} className="size-4" />
+          </span>
           <span className="min-w-0">
             <span className="block truncate font-medium">{f.name}</span>
             <span className="block text-xs text-muted md:hidden">
@@ -194,7 +196,12 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
       ),
     },
     { key: "size", header: "Size", sortable: true, hideOnMobile: true, className: "whitespace-nowrap tabular-nums", render: (f) => formatBytes(f.size) },
-    { key: "uploader", header: "Uploaded by", sortable: true, hideOnMobile: "xl", render: (f) => <span className="text-muted">{f.uploader}</span> },
+    { key: "uploader", header: "Uploaded by", sortable: true, hideOnMobile: "xl", render: (f) => (
+        <span className="flex items-center gap-2 whitespace-nowrap text-muted">
+          <Avatar name={f.uploader} size={22} />
+          {f.uploader}
+        </span>
+      ) },
     { key: "createdAt", header: "Date", sortable: true, hideOnMobile: true, render: (f) => <span className="whitespace-nowrap text-muted">{formatDateTime(f.createdAt)}</span> },
     {
       key: "id",

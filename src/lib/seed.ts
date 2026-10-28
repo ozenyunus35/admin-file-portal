@@ -18,7 +18,7 @@ import type {
  * `now` always gives the same data.
  */
 
-export const STATE_VERSION = 1;
+export const STATE_VERSION = 2;
 export const DEMO_ADMIN_ID = "u-admin-1";
 export const DEMO_CLIENT_ID = "u-client-demo";
 
@@ -117,6 +117,36 @@ function fileTemplates(folder: (typeof FOLDERS)[number], rng: Rng, project: stri
 
 const iso = (ms: number) => new Date(ms).toISOString();
 
+/**
+ * Milliseconds before `t` within the last `days` days, shaped like real usage:
+ * weekdays busier than weekends, working hours busier than nights, and a
+ * gentle upward trend towards today.
+ */
+function recentOffset(rng: Rng, t: number, days: number): number {
+  for (;;) {
+    const ago = rng() * days * DAY;
+    const at = new Date(t - ago);
+    const weekend = at.getDay() === 0 || at.getDay() === 6;
+    const h = at.getHours();
+    const weight = (weekend ? 0.3 : 1) * (h >= 8 && h <= 19 ? 1 : 0.15) * (0.45 + 0.55 * (1 - ago / (days * DAY)));
+    if (rng() < weight) return ago;
+  }
+}
+
+const STATUS_WEIGHTS: Array<[ProjectStatus, number]> = [
+  ["planning", 0.14],
+  ["active", 0.42],
+  ["review", 0.2],
+  ["completed", 0.18],
+  ["on-hold", 0.06],
+];
+
+function pickStatus(rng: Rng): ProjectStatus {
+  let r = rng();
+  for (const [status, w] of STATUS_WEIGHTS) if ((r -= w) < 0) return status;
+  return "active";
+}
+
 export function createSeed(now: Date = new Date(), seed = 20261028): DemoState {
   const rng = mulberry32(seed);
   const t = now.getTime();
@@ -169,13 +199,14 @@ export function createSeed(now: Date = new Date(), seed = 20261028): DemoState {
   });
 
   const projects: Project[] = [];
-  const statuses: ProjectStatus[] = ["planning", "active", "active", "active", "review", "review", "completed", "completed", "on-hold"];
   companies.forEach((company, ci) => {
-    const count = between(rng, 2, 3);
+    const count = between(rng, 2, 4);
     const names = shuffle(rng, PROJECT_NAMES).slice(0, count);
     names.forEach((name, k) => {
-      const status = company.status === "paused" ? "on-hold" : pick(rng, statuses);
-      const start = t - between(rng, 20, 200) * DAY;
+      const status: ProjectStatus = company.status === "paused" ? (k === 0 ? "on-hold" : "completed") : company.status === "onboarding" ? (k === 0 ? "active" : "planning") : pickStatus(rng);
+      const start = t - between(rng, 20, 160) * DAY;
+      // Open work is mostly due in the coming weeks (a couple slightly late); finished work was due in the past.
+      const due = status === "completed" ? t - between(rng, 3, 60) * DAY : t + between(rng, status === "on-hold" ? -10 : -4, 80) * DAY;
       projects.push({
         id: `p-${ci}-${k}`,
         name,
@@ -183,9 +214,9 @@ export function createSeed(now: Date = new Date(), seed = 20261028): DemoState {
         ownerId: pick(rng, ADMINS).id,
         status,
         budget: between(rng, 8, 90) * 500,
-        progress: status === "completed" ? 100 : status === "planning" ? between(rng, 0, 15) : between(rng, 20, 95),
-        startDate: iso(start),
-        dueDate: iso(start + between(rng, 45, 240) * DAY),
+        progress: status === "completed" ? 100 : status === "planning" ? between(rng, 0, 15) : status === "review" ? between(rng, 80, 96) : between(rng, 25, 85),
+        startDate: iso(Math.min(start, due - 30 * DAY)),
+        dueDate: iso(due),
       });
     });
   });
@@ -210,7 +241,7 @@ export function createSeed(now: Date = new Date(), seed = 20261028): DemoState {
           mime: SEED_MIME[kind],
           size: between(rng, min, max),
           uploadedBy: pick(rng, uploaders),
-          createdAt: iso(t - between(rng, 0, 28) * DAY - between(rng, 0, 23) * 3_600_000),
+          createdAt: iso(t - recentOffset(rng, t, 29)),
           seed: kind,
         });
       }
@@ -218,11 +249,11 @@ export function createSeed(now: Date = new Date(), seed = 20261028): DemoState {
   });
 
   const activity: Activity[] = [];
-  const actions: ActivityAction[] = ["auth.login", "auth.login", "file.download", "file.download", "project.update", "user.update", "file.share"];
+  const actions: ActivityAction[] = ["auth.login", "auth.login", "auth.login", "file.download", "file.download", "project.update", "user.update", "file.share"];
   for (const f of files) {
     activity.push({ id: "", at: f.createdAt, actorId: f.uploadedBy, action: "file.upload", target: f.name, companyId: f.companyId });
   }
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 520; i++) {
     const actor = pick(rng, users.filter((u) => u.status === "active"));
     const action = pick(rng, actions);
     const companyId = actor.companyId ?? pick(rng, companies).id;
@@ -234,7 +265,7 @@ export function createSeed(now: Date = new Date(), seed = 20261028): DemoState {
           : action === "user.update"
             ? pick(rng, users.filter((u) => u.companyId === companyId)).name
             : pick(rng, files.filter((f) => f.companyId === companyId).concat(files)).name;
-    activity.push({ id: "", at: iso(t - between(rng, 0, 29 * 24) * 3_600_000 - between(rng, 0, 59) * 60_000), actorId: actor.id, action, target, companyId: action === "auth.login" ? actor.companyId : companyId });
+    activity.push({ id: "", at: iso(t - recentOffset(rng, t, 29)), actorId: actor.id, action, target, companyId: action === "auth.login" ? actor.companyId : companyId });
   }
   activity.sort((a, b) => b.at.localeCompare(a.at));
   activity.forEach((a, i) => (a.id = `a-${activity.length - i}`));

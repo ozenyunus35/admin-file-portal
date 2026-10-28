@@ -35,7 +35,7 @@ export function timeAgo(iso: string | null, now = Date.now()): string {
 export const initials = (name: string) =>
   name
     .split(/\s+/)
-    .filter(Boolean)
+    .filter((w) => /^\p{L}/u.test(w))
     .slice(0, 2)
     .map((p) => p[0]!.toUpperCase())
     .join("");

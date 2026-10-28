@@ -28,7 +28,7 @@ test("login page offers both demo roles and rejects unknown emails", async ({ pa
 test("admin dashboard shows KPIs, chart and activity", async ({ page }) => {
   await signIn(page, "admin");
   for (const kpi of ["Active clients", "Active users", "Open projects", "Uploads, 30 days"]) await expect(page.getByText(kpi)).toBeVisible();
-  await expect(page.locator(".recharts-bar-rectangle").first()).toBeVisible();
+  await expect(page.locator(".recharts-area-area").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Recent activity" })).toBeVisible();
   await expect(page.getByText("Maya Chen signed in").or(page.getByText(/Maya Chen\s+signed in/)).first()).toBeVisible();
 });
@@ -83,6 +83,8 @@ test("admin manages users: search, filter, sort, paginate, invite, disable, expo
 test("admin updates a project and sees it in the activity log", async ({ page }) => {
   await signIn(page, "admin");
   await nav(page, "Projects");
+  await expect(page.getByRole("region", { name: "active projects" })).toBeVisible();
+  await page.getByRole("button", { name: "Table" }).click();
   await page.getByRole("table").getByRole("row").nth(1).click();
   const dialog = page.getByRole("dialog");
   const name = (await dialog.getByRole("heading").textContent())!.replace("Update ", "");
@@ -240,4 +242,14 @@ for (const role of ["admin", "client"] as const) {
 test("signed-out visitors are sent to the login page", async ({ page }) => {
   await page.goto("dashboard/");
   await expect(page.getByRole("heading", { name: "Try the live demo" })).toBeVisible();
+});
+
+test("command palette finds records and navigates", async ({ page }) => {
+  await signIn(page, "admin");
+  await page.keyboard.press("ControlOrMeta+k");
+  const palette = page.getByRole("dialog", { name: "Search" });
+  await palette.getByLabel("Search everything").fill("kestrel legal");
+  await expect(palette.getByRole("option").first()).toContainText("Kestrel Legal LLP");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { level: 1, name: "Clients" })).toBeVisible();
 });

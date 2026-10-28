@@ -4,7 +4,7 @@ import { Building2, FolderOpen, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/components/toast";
-import { Badge, Card, EmptyState, Field, Meter, Modal, PageHeader, STATUS_TONE, inputClass } from "@/components/ui";
+import { Avatar, Badge, Card, EmptyState, Field, Meter, Modal, PageHeader, STATUS_TONE, inputClass } from "@/components/ui";
 import { storageUsed, updateCompany } from "@/lib/api";
 import { formatBytes, formatDate, formatMoney } from "@/lib/format";
 import { PLAN_QUOTA } from "@/lib/seed";
@@ -31,20 +31,23 @@ export default function ClientsPage() {
         </Card>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {list.map((c) => {
+          {list.map((c, i) => {
             const used = storageUsed(state, c.id);
             return (
-              <li key={c.id}>
-                <Card className="flex h-full flex-col p-0">
-                  <button onClick={() => setOpenId(c.id)} className="flex flex-1 flex-col rounded-xl p-4 text-left hover:bg-surface-2/60" aria-label={`Open ${c.name}`}>
-                    <div className="flex w-full items-start justify-between gap-2">
-                      <div className="min-w-0">
+              <li key={c.id} className="stagger" style={{ "--d": `${i * 50}ms` } as React.CSSProperties}>
+                <Card className="flex h-full flex-col p-0 transition-all duration-300 hover:-translate-y-0.5 hover:border-border-strong">
+                  <button onClick={() => setOpenId(c.id)} className="flex flex-1 flex-col rounded-2xl p-5 text-left" aria-label={`Open ${c.name}`}>
+                    <div className="flex w-full items-start gap-3">
+                      <Avatar name={c.name} size={40} />
+                      <div className="min-w-0 flex-1">
                         <p className="truncate font-medium">{c.name}</p>
                         <p className="mt-0.5 flex items-center gap-1 text-xs text-muted">
                           <MapPin className="size-3" aria-hidden /> {c.country} · {c.industry}
                         </p>
                       </div>
-                      <Badge tone={STATUS_TONE[c.status]}>{c.status}</Badge>
+                      <span className="shrink-0">
+                        <Badge tone={STATUS_TONE[c.status]}>{c.status}</Badge>
+                      </span>
                     </div>
                     <dl className="mt-4 grid w-full grid-cols-3 gap-2 text-sm">
                       <div>

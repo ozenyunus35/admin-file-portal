@@ -24,10 +24,12 @@ You can also sign in with any seeded email, for example `daniel@atlasportal.exam
 ## Features
 
 **Admin**
-- Dashboard: KPI cards, uploads per day chart, projects by status, storage per client, recent activity.
+- Dashboard: animated KPI cards with sparklines and week-over-week change, uploads and sign-ins chart with a
+  7/14/30-day switch, projects-by-status donut, projects due soon, storage per client, activity timeline.
 - Users table with search, filters (role, status, company), sortable columns, pagination, invite, edit, disable/enable, and CSV export of the filtered rows.
 - Clients with plan and storage quota; changing the plan changes the quota.
-- Projects table with status and progress editing, CSV export.
+- Projects as a Kanban board (one column per status, progress rings, due dates) or a sortable table, with
+  status, progress and owner editing and CSV export.
 - Activity log (audit trail) of sign-ins, edits, uploads, downloads, shares and exports, with CSV export.
 
 **File portal**
@@ -39,14 +41,20 @@ You can also sign in with any seeded email, for example `daniel@atlasportal.exam
   download counter and revoke.
 
 **Everywhere**
+- Command palette (⌘K / Ctrl+K): search pages, clients, projects, people and files, keyboard navigation.
+- Notifications panel, page transitions and micro-interactions that respect `prefers-reduced-motion`.
 - Role-based access: clients never see admin pages or other companies' data; the mock API enforces it too.
-- Responsive layout with a mobile menu, light and dark theme, keyboard-friendly dialogs and tables
+- Responsive layout with a mobile menu, designed dark and light themes, keyboard-friendly dialogs and tables
   (`aria-sort`, labelled controls, focus rings), empty, loading and error states.
 
-| Dashboard | Users |
+| Sign-in | Dashboard |
 | --- | --- |
-| ![Dashboard](docs/dashboard.png) | ![Users](docs/users.png) |
-| **File portal** | **Preview** |
+| ![Sign-in](docs/login.png) | ![Dashboard](docs/dashboard.png) |
+| **Projects board** | **Command palette** |
+| ![Projects](docs/projects.png) | ![Command palette](docs/search.png) |
+| **Users** | **Light theme** |
+| ![Users](docs/users.png) | ![Light theme](docs/light.png) |
+| **File portal** | **PDF preview** |
 | ![Files](docs/files.png) | ![Preview](docs/preview.png) |
 
 <p align="center"><img src="docs/mobile.png" width="260" alt="Client dashboard on a phone"> <img src="docs/mobile-files.png" width="260" alt="File portal on a phone"></p>

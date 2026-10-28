@@ -3,13 +3,16 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --bg: #f6f7f9;
+  --bg: #f4f6f9;
   --surface: #ffffff;
-  --surface-2: #f1f3f6;
-  --border: #e3e7ed;
-  --text: #0f1419;
-  --muted: #5b6573;
+  --surface-2: #eef2f6;
+  --surface-3: #e5eaf0;
+  --border: #e1e6ed;
+  --border-strong: #cfd6df;
+  --text: #0b1220;
+  --muted: #5a6576;
   --accent: #0d9488;
+  --accent-2: #6366f1;
   --accent-soft: #ccfbf1;
   --accent-fg: #ffffff;
   --danger: #dc2626;
@@ -20,27 +23,48 @@
   --success-soft: #dcfce7;
   --info: #2563eb;
   --info-soft: #dbeafe;
+  --chart-1: #0d9488;
+  --chart-2: #6366f1;
+  --chart-3: #f59e0b;
+  --chart-4: #e11d48;
+  --chart-5: #94a3b8;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 8px 24px -12px rgb(15 23 42 / 0.12);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.9);
+  --glow-1: rgb(13 148 136 / 0.14);
+  --glow-2: rgb(99 102 241 / 0.1);
   color-scheme: light;
 }
 
 .dark {
-  --bg: #0b0f14;
-  --surface: #121821;
-  --surface-2: #19212c;
-  --border: #253041;
-  --text: #e6edf3;
-  --muted: #94a3b8;
+  --bg: #080b10;
+  --surface: #0e131a;
+  --surface-2: #151b24;
+  --surface-3: #1c2430;
+  --border: #1d2631;
+  --border-strong: #2a3542;
+  --text: #e8eef4;
+  --muted: #8b98a9;
   --accent: #5eead4;
-  --accent-soft: #134e4a;
+  --accent-2: #a5b4fc;
+  --accent-soft: rgb(94 234 212 / 0.12);
   --accent-fg: #042f2e;
-  --danger: #f87171;
-  --danger-soft: #450a0a;
+  --danger: #fb7185;
+  --danger-soft: rgb(251 113 133 / 0.12);
   --warning: #fbbf24;
-  --warning-soft: #422006;
+  --warning-soft: rgb(251 191 36 / 0.12);
   --success: #4ade80;
-  --success-soft: #052e16;
-  --info: #93c5fd;
-  --info-soft: #172554;
+  --success-soft: rgb(74 222 128 / 0.12);
+  --info: #7dd3fc;
+  --info-soft: rgb(125 211 252 / 0.12);
+  --chart-1: #5eead4;
+  --chart-2: #818cf8;
+  --chart-3: #fbbf24;
+  --chart-4: #fb7185;
+  --chart-5: #64748b;
+  --shadow-card: 0 1px 0 rgb(0 0 0 / 0.4), 0 12px 32px -16px rgb(0 0 0 / 0.6);
+  --highlight: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  --glow-1: rgb(94 234 212 / 0.09);
+  --glow-2: rgb(129 140 248 / 0.08);
   color-scheme: dark;
 }
 
@@ -48,10 +72,13 @@
   --color-bg: var(--bg);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-text: var(--text);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-2: var(--accent-2);
   --color-accent-soft: var(--accent-soft);
   --color-accent-fg: var(--accent-fg);
   --color-danger: var(--danger);
@@ -63,12 +90,102 @@
   --color-info: var(--info);
   --color-info-soft: var(--info-soft);
   --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-space-grotesk);
+  --font-mono: var(--font-jetbrains-mono);
+  --shadow-card: var(--shadow-card);
+  --animate-enter: enter 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-drawer: drawer 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-pop: pop 0.18s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes drawer {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+
+@keyframes fill {
+  from {
+    width: 0;
+  }
 }
 
 body {
   background: var(--bg);
   color: var(--text);
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Soft two-colour glow behind the app, fixed so it doesn't scroll. */
+.app-bg {
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, var(--glow-1), transparent 60%),
+    radial-gradient(50rem 30rem at 0% 0%, var(--glow-2), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+
+.dot-grid {
+  background-image: radial-gradient(rgb(148 163 184 / 0.18) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.text-gradient {
+  background: linear-gradient(100deg, #5eead4 10%, #a5b4fc 55%, #f0abfc 95%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Staggered entrance: set --d on the element for its delay. */
+.stagger {
+  animation: var(--animate-enter);
+  animation-delay: var(--d, 0ms);
+}
+
+.meter-fill {
+  animation: fill 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
 }
 
 :focus-visible {
@@ -77,7 +194,16 @@ body {
 }
 
 dialog::backdrop {
-  background: rgb(0 0 0 / 0.5);
+  background: rgb(2 6 12 / 0.6);
+  backdrop-filter: blur(4px);
+}
+
+dialog[open] {
+  animation: var(--animate-pop);
+}
+
+::selection {
+  background: rgb(94 234 212 / 0.3);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -85,6 +211,13 @@ dialog::backdrop {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
   }
 }

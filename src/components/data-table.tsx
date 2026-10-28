@@ -73,7 +73,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
 
   return (
     <div>
-      <div className="flex flex-col gap-2 border-b border-border p-3 md:flex-row md:items-center">
+      <div className="flex flex-col gap-2 border-b border-border p-3 sm:p-4 md:flex-row md:items-center">
         {searchKeys && (
           <div className="relative md:w-72">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
@@ -100,7 +100,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
                 setFilterValues((v) => ({ ...v, [f.key]: e.target.value }));
                 setPage(1);
               }}
-              className="h-10 rounded-lg border border-border bg-surface px-3 pr-8 text-sm focus:border-accent focus:outline-none"
+              className="h-10 rounded-lg border border-border bg-surface px-3 pr-8 text-sm shadow-[var(--highlight)] transition-colors hover:border-border-strong focus:border-accent focus:outline-none"
             >
               <option value="">{f.label}: all</option>
               {f.options.map((o) => (
@@ -122,7 +122,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
             <caption className="sr-only">
               {label}, {result.total} rows{sort ? `, sorted by ${columns.find((c) => c.key === sort.key)?.header} ${sort.dir === "asc" ? "ascending" : "descending"}` : ""}
             </caption>
-            <thead className="bg-surface-2 text-xs text-muted uppercase">
+            <thead className="bg-surface-2/50 font-mono text-[10.5px] tracking-[0.08em] text-muted uppercase">
               <tr>
                 {columns.map((c) => {
                   const active = sort?.key === c.key;
@@ -134,7 +134,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
                       className={cx("px-3 py-2.5 font-medium whitespace-nowrap sm:px-4", c.hideOnMobile && (c.hideOnMobile === "xl" ? "hidden xl:table-cell" : "hidden md:table-cell"), c.className)}
                     >
                       {c.sortable ? (
-                        <button onClick={() => toggleSort(c.key)} className="-mx-1 inline-flex items-center gap-1 rounded px-1 uppercase hover:text-text">
+                        <button onClick={() => toggleSort(c.key)} className="-mx-1 inline-flex items-center gap-1 rounded px-1 tracking-[0.08em] uppercase transition-colors hover:text-text">
                           {c.header}
                           {active ? sort.dir === "asc" ? <ArrowUp className="size-3.5" aria-hidden /> : <ArrowDown className="size-3.5" aria-hidden /> : <ChevronsUpDown className="size-3.5 opacity-50" aria-hidden />}
                         </button>
@@ -147,16 +147,17 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {result.rows.map((row) => (
+              {result.rows.map((row, i) => (
                 <tr
                   key={rowKey(row)}
-                  className={cx("hover:bg-surface-2/60", onRowClick && "cursor-pointer")}
+                  style={{ "--d": `${i * 25}ms` } as React.CSSProperties}
+                  className={cx("stagger transition-colors hover:bg-accent-soft/40", onRowClick && "cursor-pointer")}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   onKeyDown={onRowClick ? (e) => e.key === "Enter" && e.target === e.currentTarget && onRowClick(row) : undefined}
                   tabIndex={onRowClick ? 0 : undefined}
                 >
                   {columns.map((c) => (
-                    <td key={c.key} className={cx("px-3 py-3 align-middle sm:px-4", c.hideOnMobile && (c.hideOnMobile === "xl" ? "hidden xl:table-cell" : "hidden md:table-cell"), c.className)}>
+                    <td key={c.key} className={cx("px-3 py-3.5 align-middle sm:px-4", c.hideOnMobile && (c.hideOnMobile === "xl" ? "hidden xl:table-cell" : "hidden md:table-cell"), c.className)}>
                       {c.render ? c.render(row) : String(row[c.key] ?? "")}
                     </td>
                   ))}
@@ -168,17 +169,17 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
       )}
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-3 text-sm text-muted">
-        <p aria-live="polite">
+        <p aria-live="polite" className="font-mono text-xs">
           {from}–{to} of {result.total}
         </p>
         <div className="flex items-center gap-1">
-          <button onClick={() => setPage(result.page - 1)} disabled={result.page <= 1} className="rounded-md p-1.5 hover:bg-surface-2 disabled:opacity-40" aria-label="Previous page">
+          <button onClick={() => setPage(result.page - 1)} disabled={result.page <= 1} className="rounded-lg border border-border p-1.5 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Previous page">
             <ChevronLeft className="size-4" />
           </button>
-          <span className="px-2 tabular-nums">
+          <span className="px-2 font-mono text-xs tabular-nums">
             Page {result.page} of {result.pageCount}
           </span>
-          <button onClick={() => setPage(result.page + 1)} disabled={result.page >= result.pageCount} className="rounded-md p-1.5 hover:bg-surface-2 disabled:opacity-40" aria-label="Next page">
+          <button onClick={() => setPage(result.page + 1)} disabled={result.page >= result.pageCount} className="rounded-lg border border-border p-1.5 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Next page">
             <ChevronRight className="size-4" />
           </button>
         </div>
