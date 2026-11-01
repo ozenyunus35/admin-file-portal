@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { canSignIn } from "./api";
 import { clearBlobs } from "./blobs";
 import { createSeed, STATE_VERSION } from "./seed";
 import type { DemoState, User } from "./types";
@@ -106,6 +107,6 @@ export async function resetDemo(keepSession: string | null) {
 
 export function useStore(): { state: DemoState | null; user: User | null; ready: boolean } {
   const s = useSyncExternalStore(subscribe, getSnapshot, () => SERVER_SNAPSHOT);
-  const user = s.state && s.session ? (s.state.users.find((u) => u.id === s.session && u.status !== "disabled") ?? null) : null;
+  const user = s.state && s.session ? (s.state.users.find((u) => u.id === s.session && canSignIn(s.state!, u)) ?? null) : null;
   return { state: s.state, user, ready: s.state !== null };
 }

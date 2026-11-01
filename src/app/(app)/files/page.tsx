@@ -7,7 +7,7 @@ import { DataTable, type Column } from "@/components/data-table";
 import { FileIcon, PreviewDialog, ShareDialog, useDownload } from "@/components/file-dialogs";
 import { useToast } from "@/components/toast";
 import { Avatar, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, Spinner, cx, inputClass } from "@/components/ui";
-import { ApiError, MAX_UPLOAD_BYTES, addFile, canDeleteFile, checkUpload, createFolder, deleteFile, storageUsed, uniqueName } from "@/lib/api";
+import { ApiError, MAX_UPLOAD_BYTES, addFile, canDeleteFile, checkUpload, cleanFileName, createFolder, deleteFile, storageUsed, uniqueName } from "@/lib/api";
 import { deleteBlob, putBlob } from "@/lib/blobs";
 import { formatBytes, formatDateTime } from "@/lib/format";
 import { randomId } from "@/lib/ids";
@@ -56,7 +56,7 @@ function useUploads(user: User) {
         tick();
       });
       await putBlob(id, file);
-      const name = uniqueName(getState(), folderId, file.name);
+      const name = uniqueName(getState(), folderId, cleanFileName(file.name) ?? file.name);
       mutate((s) => addFile(s, user, { id, folderId, name, mime: file.type, size: file.size }));
       patch(key, { progress: 100, status: "done", name });
     } catch (e) {
@@ -133,7 +133,7 @@ function UploadQueue({ jobs, onClear }: { jobs: UploadJob[]; onClear: () => void
               {j.status === "done" && <CheckCircle2 className="size-4 shrink-0 text-success" aria-label="Uploaded" />}
               {j.status === "error" && <AlertCircle className="size-4 shrink-0 text-danger" aria-label="Failed" />}
               <span className="min-w-0 flex-1 truncate">{j.name}</span>
-              <span className="shrink-0 text-xs text-muted tabular-nums">{j.status === "uploading" ? `${Math.round(j.progress)}%` : formatBytes(j.size)}</span>
+              <span className="shrink-0 text-xs text-muted tabular-nums">{j.status === "uploading" ? `${Math.round(j.progress)}%` : j.status === "done" ? formatBytes(j.size) : ""}</span>
             </div>
             {j.status === "uploading" && (
               <div role="progressbar" aria-label={`Uploading ${j.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(j.progress)} className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">

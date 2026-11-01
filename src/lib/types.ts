@@ -84,6 +84,8 @@ export type ActivityAction =
   | "file.download"
   | "file.delete"
   | "file.share"
+  | "share.revoke"
+  | "share.download"
   | "folder.create"
   | "export.csv"
   | "demo.reset";

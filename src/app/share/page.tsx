@@ -2,12 +2,12 @@
 
 import { Download, LinkIcon } from "lucide-react";
 import Link from "next/link";
-import { useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Logo } from "@/components/app-shell";
 import { FileIcon, loadFileBlob } from "@/components/file-dialogs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button, Card, EmptyState, Spinner } from "@/components/ui";
-import { resolveShare } from "@/lib/api";
+import { recordShareDownload, resolveShare } from "@/lib/api";
 import { downloadBlob } from "@/lib/csv";
 import { formatBytes, formatDate } from "@/lib/format";
 import { getState, setState, useStore } from "@/lib/store";
@@ -20,6 +20,7 @@ const subscribeHash = (cb: () => void) => {
 export default function SharePage() {
   const { state } = useStore();
   const token = useSyncExternalStore(subscribeHash, () => window.location.hash.slice(1), () => null);
+  const [missing, setMissing] = useState(false);
 
   if (!state || token === null) return <Spinner />;
   const result = token ? resolveShare(state, token) : { error: "This link is missing its token." };
@@ -28,10 +29,13 @@ export default function SharePage() {
   const download = async () => {
     if (!("file" in result)) return;
     const blob = await loadFileBlob(getState(), result.file);
-    if (!blob) return;
+    if (!blob) return setMissing(true);
     downloadBlob(blob, result.file.name);
-    const s = getState();
-    setState({ ...s, shares: s.shares.map((x) => (x.id === result.share.id ? { ...x, downloads: x.downloads + 1 } : x)) });
+    try {
+      setState(recordShareDownload(getState(), token!));
+    } catch {
+      // The link stopped working while the page was open; the page re-renders with the reason.
+    }
   };
 
   return (
@@ -56,6 +60,7 @@ export default function SharePage() {
               <p className="mt-1 text-sm text-muted">
                 {formatBytes(result.file.size)} · link expires {formatDate(result.share.expiresAt)}
               </p>
+              {missing && <p className="mt-4 text-sm text-danger">The file content is missing from this browser&apos;s storage.</p>}
               <Button variant="primary" className="mt-6 w-full" onClick={download}>
                 <Download className="size-4" /> Download
               </Button>

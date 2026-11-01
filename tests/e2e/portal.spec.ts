@@ -208,7 +208,7 @@ test("oversized uploads fail with a clear error", async ({ page }) => {
   await signIn(page, "client");
   await nav(page, "Files");
   await page.getByLabel("Upload files").setInputFiles({ name: "huge.bin", mimeType: "application/octet-stream", buffer: Buffer.alloc(26 * 1024 * 1024) });
-  await expect(page.getByText("Files are limited to 25 MB in this demo.")).toBeVisible();
+  await expect(page.getByText("This file is larger than 25 MB, the limit in this demo.")).toBeVisible();
 });
 
 test("theme choice persists and reset restores demo data", async ({ page }) => {

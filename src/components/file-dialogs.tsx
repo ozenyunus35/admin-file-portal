@@ -2,9 +2,10 @@
 
 import { Check, Copy, Download, ExternalLink, File, FileArchive, FileImage, FileSpreadsheet, FileText, Link2, Loader2, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { createShare, recordDownload, revokeShare } from "@/lib/api";
+import { canRevokeShare, createShare, recordDownload, revokeShare } from "@/lib/api";
 import { getBlob } from "@/lib/blobs";
-import { previewKind, seedBlob } from "@/lib/content";
+import { previewKind, seedBlob, type PreviewKind } from "@/lib/content";
+import { LABEL, RASTER, decodeText, parseCsv, sniff, type Sniffed } from "@/lib/sniff";
 import { downloadBlob } from "@/lib/csv";
 import { formatBytes, formatDate, formatDateTime } from "@/lib/format";
 import { getState, mutate, setState } from "@/lib/store";
@@ -40,36 +41,48 @@ export function useDownload(user: User | null) {
   };
 }
 
-function parseCsv(text: string, maxRows = 50): string[][] {
-  const rows: string[][] = [];
-  for (const line of text.split(/\r?\n/)) {
-    if (!line || line.startsWith("#")) continue;
-    const cells: string[] = [];
-    let cur = "";
-    let quoted = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (quoted) {
-        if (ch === '"' && line[i + 1] === '"') {
-          cur += '"';
-          i++;
-        } else if (ch === '"') quoted = false;
-        else cur += ch;
-      } else if (ch === '"') quoted = true;
-      else if (ch === ",") {
-        cells.push(cur);
-        cur = "";
-      } else cur += ch;
-    }
-    cells.push(cur);
-    rows.push(cells);
-    if (rows.length > maxRows) break;
-  }
-  return rows;
-}
-
-type Preview = { status: "loading" } | { status: "missing" } | { status: "ready"; url: string; blob: Blob; text?: string };
+type Preview =
+  | { status: "loading" }
+  | { status: "missing" }
+  | { status: "empty" }
+  | { status: "ready"; kind: PreviewKind | "binary"; blob: Blob; url: string; openUrl?: string; text?: string; note?: string };
 type Loaded = { fileId: string } & Preview;
+
+const KIND_OF: Record<Sniffed, PreviewKind> = { pdf: "pdf", png: "image", jpeg: "image", gif: "image", webp: "image", bmp: "image", heic: "image", tiff: "image", svg: "image", html: "text", zip: "none" };
+
+/**
+ * Decides how to show a file from its bytes, not only its name: a PNG renamed .pdf
+ * shows as an image, a binary file renamed .txt isn't dumped as text. "Open in new
+ * tab" only gets types that can't run script on this site (PDF, raster images,
+ * plain text); an uploaded SVG or HTML page would otherwise run with the app's storage.
+ */
+async function inspect(file: FileItem, blob: Blob): Promise<Preview> {
+  if (blob.size === 0) return { status: "empty" };
+  const head = new Uint8Array(await blob.slice(0, 64 * 1024).arrayBuffer());
+  const sniffed = sniff(head);
+  const declared = previewKind(file.mime, file.name);
+  let kind: PreviewKind | "binary" = sniffed ? KIND_OF[sniffed] : declared;
+  const note = sniffed && KIND_OF[sniffed] !== declared && !(sniffed === "zip" && declared === "none") ? `This file is a ${LABEL[sniffed]}, although its name or type says otherwise.` : undefined;
+  let text: string | undefined;
+  if (kind === "text") {
+    text = decodeText(head) ?? undefined;
+    if (text === undefined) kind = "binary";
+  }
+  if (!sniffed && declared === "none" && blob.size) {
+    const maybe = decodeText(head.subarray(0, 4096));
+    if (maybe !== null && /\.(log|ini|cfg|conf|ya?ml|xml|tsv|sql)$/i.test(file.name)) {
+      kind = "text";
+      text = decodeText(head) ?? maybe;
+    }
+  }
+  const typed = sniffed && RASTER[sniffed] ? new Blob([blob], { type: RASTER[sniffed] }) : sniffed === "svg" ? new Blob([blob], { type: "image/svg+xml" }) : blob;
+  const url = URL.createObjectURL(typed);
+  let openUrl: string | undefined;
+  if (sniffed === "pdf") openUrl = URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+  else if (sniffed && RASTER[sniffed]) openUrl = url;
+  else if (kind === "text" && text !== undefined && blob.size <= head.length) openUrl = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
+  return { status: "ready", kind, blob, url, openUrl, text, note };
+}
 
 export function PreviewDialog({ file, state, user, onClose }: { file: FileItem | null; state: DemoState; user: User; onClose: () => void }) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -78,24 +91,24 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
 
   useEffect(() => {
     if (!file) return;
-    let url: string | null = null;
+    let urls: string[] = [];
     let cancelled = false;
     loadFileBlob(state, file).then(async (blob) => {
       if (cancelled) return;
       if (!blob) return setLoaded({ fileId: file.id, status: "missing" });
-      url = URL.createObjectURL(blob);
-      const text = previewKind(file.mime, file.name) === "text" ? (await blob.slice(0, 64 * 1024).text()) : undefined;
-      if (!cancelled) setLoaded({ fileId: file.id, status: "ready", url, blob, text });
+      const p = await inspect(file, blob);
+      if (p.status === "ready") urls = [...new Set([p.url, p.openUrl].filter((u): u is string => !!u))];
+      if (cancelled) return urls.forEach((u) => URL.revokeObjectURL(u));
+      setLoaded({ fileId: file.id, ...p });
     });
     return () => {
       cancelled = true;
-      if (url) URL.revokeObjectURL(url);
+      urls.forEach((u) => URL.revokeObjectURL(u));
     };
     // Regenerate only when a different file is opened.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file?.id]);
 
-  const kind = file ? previewKind(file.mime, file.name) : "none";
   const uploader = state.users.find((u) => u.id === file?.uploadedBy)?.name ?? "Unknown";
 
   return (
@@ -107,8 +120,8 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
       footer={
         file && (
           <>
-            {preview.status === "ready" && (
-              <a href={preview.url} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-medium hover:bg-surface-2">
+            {preview.status === "ready" && preview.openUrl && (
+              <a href={preview.openUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-medium hover:bg-surface-2">
                 <ExternalLink className="size-4" aria-hidden /> Open in new tab
               </a>
             )}
@@ -125,6 +138,11 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
             {formatBytes(file.size)} · uploaded by {uploader} · {formatDateTime(file.createdAt)}
             {file.seed && " · synthetic sample content"}
           </p>
+          {preview.status === "ready" && preview.note && (
+            <p className="mb-3 rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs text-warning" role="note">
+              {preview.note}
+            </p>
+          )}
           <div className="overflow-hidden rounded-lg border border-border bg-surface-2">
             {preview.status === "loading" && (
               <div className="flex h-72 items-center justify-center text-muted" role="status">
@@ -133,19 +151,18 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
               </div>
             )}
             {preview.status === "missing" && <EmptyState icon={File} title="File content not found" text="The bytes for this upload are no longer in this browser's storage. Delete the entry or upload it again." />}
-            {preview.status === "ready" && kind === "image" && <ImagePreview key={file.id} url={preview.url} name={file.name} />}
-            {preview.status === "ready" && kind === "pdf" && (
-              <PdfPreview blob={preview.blob} name={file.name} />
-            )}
-            {preview.status === "ready" && kind === "text" && preview.text !== undefined && (
-              /\.csv$/i.test(file.name) || file.mime === "text/csv" ? (
+            {preview.status === "empty" && <EmptyState icon={File} title="This file is empty" text="It has no content (0 bytes). Ask the sender to upload it again." />}
+            {preview.status === "ready" && preview.kind === "image" && <ImagePreview key={file.id} url={preview.url} name={file.name} />}
+            {preview.status === "ready" && preview.kind === "pdf" && <PdfPreview blob={preview.blob} name={file.name} />}
+            {preview.status === "ready" && preview.kind === "text" && preview.text !== undefined && (
+              /\.(csv|tsv)$/i.test(file.name) || /csv|tab-separated/.test(file.mime) ? (
                 <div className="max-h-[60vh] overflow-auto">
                   <table className="w-full text-left font-mono text-xs">
                     <tbody>
                       {parseCsv(preview.text).map((row, i) => (
                         <tr key={i} className={i === 0 ? "bg-surface font-semibold" : "border-t border-border"}>
                           {row.map((c, j) => (
-                            <td key={j} className="px-3 py-1.5 whitespace-nowrap">
+                            <td key={j} className="px-3 py-1.5 whitespace-pre">
                               {c}
                             </td>
                           ))}
@@ -158,7 +175,8 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
                 <pre className="max-h-[60vh] overflow-auto p-4 font-mono text-xs whitespace-pre-wrap">{preview.text}</pre>
               )
             )}
-            {preview.status === "ready" && kind === "none" && <EmptyState icon={File} title="No preview for this file type" text="Download the file to open it on your device." />}
+            {preview.status === "ready" && preview.kind === "binary" && <EmptyState icon={File} title="This file isn't readable text" text="Its name says text, but the content is binary data. Download it to open it with the right app." />}
+            {preview.status === "ready" && preview.kind === "none" && <EmptyState icon={File} title="No preview for this file type" text="Download the file to open it on your device." />}
           </div>
         </>
       )}
@@ -227,9 +245,11 @@ export function ShareDialog({ file, state, user, onClose }: { file: FileItem | n
                       <button onClick={() => copy(l.token)} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-text" aria-label="Copy link">
                         {copied === l.token ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
                       </button>
-                      <button onClick={() => run(() => mutate((s) => revokeShare(s, user, l.id)), "Link revoked.")} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-danger" aria-label="Revoke link">
-                        <Trash2 className="size-4" />
-                      </button>
+                      {canRevokeShare(user, l) && (
+                        <button onClick={() => run(() => mutate((s) => revokeShare(s, user, l.id)), "Link revoked.")} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-danger" aria-label="Revoke link">
+                          <Trash2 className="size-4" />
+                        </button>
+                      )}
                     </div>
                     <p className="mt-1.5 text-xs text-muted">
                       Expires {formatDate(l.expiresAt)} · {l.downloads} download{l.downloads === 1 ? "" : "s"}

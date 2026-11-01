@@ -34,17 +34,27 @@ You can also sign in with any seeded email, for example `daniel@atlasportal.exam
 
 **File portal**
 - Folders per client, new folders, search inside a folder.
-- Drag-and-drop or browse upload with per-file progress, duplicate names renamed to `name (1).ext`.
-- Limits enforced before upload: 25 MB per file and the client's storage quota (with a warning at 85%).
-- Preview for images, PDFs (rendered with PDF.js, so it also works on Android and iOS), CSV and text.
+- Drag-and-drop or browse upload with per-file progress, duplicate names renamed to `name (1).ext` (then `(2)`,
+  and `.tar.gz` kept together). Names are cleaned: no paths, control or text-direction characters, 180 characters at most.
+- Limits enforced before upload: 25 MB per file, no empty files, and the client's storage quota (with a warning at 85%).
+- Preview for images, PDFs (rendered with PDF.js, so it also works on Android and iOS), CSV and text. The preview
+  goes by the file's content, not its name: a PNG renamed `.pdf` shows as an image with a note, binary data renamed
+  `.txt` isn't dumped as text, CSV with `;` or tab separators and multi-line cells reads correctly, and UTF-16 or
+  Windows-1252 text is decoded. HEIC and TIFF photos get a clear message.
+- Uploaded SVG and HTML files can't run script: they preview as an image or as source, and "Open in new tab" is
+  only offered for PDFs, raster images and plain text.
 - Download, delete (clients can only delete their own uploads), and share links with 1, 7 or 30 day expiry,
-  download counter and revoke.
+  download counter and revoke. A link stops working when its creator is disabled or the client is paused; clients
+  can revoke only their own links, and revokes and link downloads go into the activity log.
 
 **Everywhere**
 - Command palette (⌘K / Ctrl+K): search pages, clients, projects, people and files, keyboard navigation.
 - Notifications panel and short transitions that respect `prefers-reduced-motion`.
 - Restrained product UI: neutral greys with one accent colour, Inter, compact 13px base size, status glyphs.
-- Role-based access: clients never see admin pages or other companies' data; the mock API enforces it too.
+- Role-based access: clients never see admin pages or other companies' data; the mock API enforces it too, and
+  checks the acting user against current data, so a session opened before a disable, demotion or pause loses access at once.
+- Server-side validation in the mock API: quotas can't drop below what a client already stores, project progress is a
+  whole number from 0 to 100, completed projects are at 100%, owners are active team members, due dates follow start dates.
 - Responsive layout with a mobile menu, designed dark and light themes, keyboard-friendly dialogs and tables
   (`aria-sort`, labelled controls, focus rings), empty, loading and error states.
 
@@ -98,9 +108,15 @@ BASE_URL=https://ozenyunus35.github.io/admin-file-portal/ npm run test:e2e   # a
 ## Tests
 
 - **Unit (Vitest):** seed data integrity, every mock API rule (permissions, validation, quota, share expiry),
-  table search/sort/pagination, CSV escaping and formula-injection guard, generated PDF and ZIP structure, KPIs.
+  table search/sort/pagination, CSV escaping and formula-injection guard, generated PDF and ZIP structure, KPIs,
+  file-type detection from content, text decoding and CSV parsing.
+- **Fuzz (Vitest):** random sessions of API calls by random users (including disabled ones, paused clients and stale
+  sessions) with broken input, checking after every successful call that the rules a server must keep still hold;
+  and 1,500 random files (binary, UTF-8, UTF-16, Windows-1252, CSV with random separators and quoting). On 200 seeds
+  the API before this check broke a rule in every session; now there are none.
 - **End-to-end (Playwright):** sign-in, user management, CSV download, project edits, client access limits,
-  uploads with progress, previews, share links, delete, error states, theme, reset, and a check that no page
+  uploads with progress, previews (including script-carrying SVG/HTML, renamed and binary files, `;` CSV), share
+  links and who may revoke them, paused clients, delete, error states, theme, reset, and a check that no page
   scrolls sideways, on four browser/device profiles.
 
 GitHub Actions runs lint, type check, unit and e2e tests on every push to `main`, then deploys to GitHub Pages.

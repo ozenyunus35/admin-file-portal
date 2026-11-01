@@ -12,6 +12,8 @@ export const ACTION_LABEL: Record<ActivityAction, string> = {
   "file.download": "downloaded",
   "file.delete": "deleted",
   "file.share": "created a share link for",
+  "share.revoke": "revoked a share link for",
+  "share.download": "had a share link used to download",
   "folder.create": "created folder",
   "export.csv": "exported",
   "demo.reset": "reset the demo",

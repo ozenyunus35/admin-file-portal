@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { LogoMark } from "@/components/app-shell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, Button, Field, inputClass } from "@/components/ui";
-import { log } from "@/lib/api";
+import { canSignIn, log } from "@/lib/api";
 import { DEMO_ADMIN_ID, DEMO_CLIENT_ID } from "@/lib/seed";
 import { getState, setSession, setState, useStore } from "@/lib/store";
 
@@ -34,6 +34,7 @@ export default function LoginPage() {
     const u = state?.users.find((x) => x.email.toLowerCase() === email.trim().toLowerCase());
     if (!u) return setError("No demo account uses this email. Try one of the buttons above.");
     if (u.status === "disabled") return setError("This account is disabled. An admin can re-enable it on the Users page.");
+    if (state && !canSignIn(state, u)) return setError("This client's portal is paused. An admin can reactivate it on the Clients page.");
     signIn(u.id);
   };
 
@@ -61,7 +62,7 @@ export default function LoginPage() {
             {roles.map(({ u, role, who, desc }, i) => (
               <button
                 key={role}
-                disabled={!u || u.status === "disabled"}
+                disabled={!u || !state || !canSignIn(state, u)}
                 onClick={() => u && signIn(u.id)}
                 className={`group flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-surface-2 disabled:opacity-50 ${i ? "border-t border-border" : ""}`}
               >
