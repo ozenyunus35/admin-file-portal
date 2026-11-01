@@ -133,10 +133,7 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
               </div>
             )}
             {preview.status === "missing" && <EmptyState icon={File} title="File content not found" text="The bytes for this upload are no longer in this browser's storage. Delete the entry or upload it again." />}
-            {preview.status === "ready" && kind === "image" && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={preview.url} alt={`Preview of ${file.name}`} className="mx-auto max-h-[60vh] w-auto object-contain" />
-            )}
+            {preview.status === "ready" && kind === "image" && <ImagePreview key={file.id} url={preview.url} name={file.name} />}
             {preview.status === "ready" && kind === "pdf" && (
               <PdfPreview blob={preview.blob} name={file.name} />
             )}
@@ -246,4 +243,19 @@ export function ShareDialog({ file, state, user, onClose }: { file: FileItem | n
       )}
     </Modal>
   );
+}
+
+/** Shows an image, or says so when the browser cannot decode it (iPhone HEIC photos, TIFF scans). */
+function ImagePreview({ url, name }: { url: string; name: string }) {
+  const [broken, setBroken] = useState(false);
+  if (broken)
+    return (
+      <EmptyState
+        icon={FileImage}
+        title="This image can't be shown in the browser"
+        text={`${name.split(".").pop()?.toUpperCase() ?? "This"} photos (common from iPhones and scanners) aren't supported by web browsers. Download it to open it on your device.`}
+      />
+    );
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src={url} alt={`Preview of ${name}`} onError={() => setBroken(true)} className="mx-auto max-h-[60vh] w-auto object-contain" />;
 }

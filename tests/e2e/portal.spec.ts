@@ -196,6 +196,14 @@ test("seeded PDFs render a preview on every browser", async ({ page }) => {
   await expect(page.getByTestId("pdf-pages").locator("canvas")).toHaveCount(1, { timeout: 15_000 });
 });
 
+test("photos the browser cannot decode get a clear message instead of a broken image", async ({ page }) => {
+  await signIn(page, "client");
+  await nav(page, "Files");
+  await page.getByLabel("Upload files").setInputFiles({ name: "IMG_0042.HEIC", mimeType: "image/heic", buffer: Buffer.from("not decodable here") });
+  await page.getByRole("button", { name: /IMG_0042\.HEIC/ }).first().click({ timeout: 10_000 });
+  await expect(page.getByRole("dialog").getByText("This image can't be shown in the browser")).toBeVisible();
+});
+
 test("oversized uploads fail with a clear error", async ({ page }) => {
   await signIn(page, "client");
   await nav(page, "Files");
