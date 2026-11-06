@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ChevronsUpDown, Search }
 import { useMemo, useState } from "react";
 import { queryTable, type SortDir } from "@/lib/query";
 import { cx, inputClass } from "./ui";
+import { useKnown, useT } from "@/lib/i18n";
 
 export interface Column<T> {
   key: keyof T & string;
@@ -39,6 +40,8 @@ interface Props<T> {
 }
 
 export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchPlaceholder = "Search", filters = [], initialSort, pageSize = 10, toolbar, empty, onRowClick }: Props<T>) {
+  const known = useKnown();
+  const t = useT();
   const [search, setSearch] = useState("");
   const [filterValues, setFilterValues] = useState<Record<string, string>>({});
   const [sort, setSort] = useState(initialSort);
@@ -84,7 +87,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              placeholder={searchPlaceholder}
+              placeholder={t(searchPlaceholder)}
               aria-label={searchPlaceholder}
               className={cx(inputClass, "pl-9")}
             />
@@ -94,7 +97,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
           {filters.map((f) => (
             <select
               key={f.key}
-              aria-label={f.label}
+              aria-label={t(f.label)}
               value={filterValues[f.key] ?? ""}
               onChange={(e) => {
                 setFilterValues((v) => ({ ...v, [f.key]: e.target.value }));
@@ -102,10 +105,10 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
               }}
               className="h-8 rounded-md border border-border bg-surface px-2.5 pr-7 text-[13px] shadow-card transition-colors hover:border-border-strong focus:border-accent focus:outline-none"
             >
-              <option value="">{f.label}: all</option>
+              <option value="">{t("{label}: all", { label: t(f.label) })}</option>
               {f.options.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label}
+                  {known(o.label)}
                 </option>
               ))}
             </select>
@@ -120,7 +123,8 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <caption className="sr-only">
-              {label}, {result.total} rows{sort ? `, sorted by ${columns.find((c) => c.key === sort.key)?.header} ${sort.dir === "asc" ? "ascending" : "descending"}` : ""}
+              {t("{label}, {n} rows", { label, n: result.total })}
+              {sort ? `, ${t(sort.dir === "asc" ? "sorted by {column} ascending" : "sorted by {column} descending", { column: t(columns.find((c) => c.key === sort.key)?.header ?? "") })}` : ""}
             </caption>
             <thead className="text-xs text-muted">
               <tr>
@@ -135,11 +139,11 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
                     >
                       {c.sortable ? (
                         <button onClick={() => toggleSort(c.key)} className="-mx-1 inline-flex items-center gap-1 rounded px-1 transition-colors hover:text-text">
-                          {c.header}
+                          {t(c.header)}
                           {active ? sort.dir === "asc" ? <ArrowUp className="size-3" aria-hidden /> : <ArrowDown className="size-3" aria-hidden /> : <ChevronsUpDown className="size-3 opacity-40" aria-hidden />}
                         </button>
                       ) : (
-                        c.header
+                        t(c.header)
                       )}
                     </th>
                   );
@@ -169,16 +173,16 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-4 py-2.5 text-xs text-muted">
         <p aria-live="polite" className="tabular-nums">
-          {from}–{to} of {result.total}
+          {t("{from}–{to} of {total}", { from, to, total: result.total })}
         </p>
         <div className="flex items-center gap-1">
-          <button onClick={() => setPage(result.page - 1)} disabled={result.page <= 1} className="rounded-md border border-border p-1 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Previous page">
+          <button onClick={() => setPage(result.page - 1)} disabled={result.page <= 1} className="rounded-md border border-border p-1 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label={t("Previous page")}>
             <ChevronLeft className="size-4" />
           </button>
           <span className="px-2 tabular-nums">
-            Page {result.page} of {result.pageCount}
+            {t("Page {n} of {total}", { n: result.page, total: result.pageCount })}
           </span>
-          <button onClick={() => setPage(result.page + 1)} disabled={result.page >= result.pageCount} className="rounded-md border border-border p-1 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label="Next page">
+          <button onClick={() => setPage(result.page + 1)} disabled={result.page >= result.pageCount} className="rounded-md border border-border p-1 transition-colors hover:bg-surface-2 hover:text-text disabled:opacity-40" aria-label={t("Next page")}>
             <ChevronRight className="size-4" />
           </button>
         </div>

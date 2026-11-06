@@ -2,7 +2,7 @@
 
 import { Activity as ActivityIcon, Download } from "lucide-react";
 import { DataTable, type Column } from "@/components/data-table";
-import { ACTION_LABEL, actorName } from "@/components/activity-text";
+import { useActionLabel, ACTION_LABEL, actorName } from "@/components/activity-text";
 import { useToast } from "@/components/toast";
 import { Badge, Button, Card, EmptyState, PageHeader, type Tone } from "@/components/ui";
 import { log } from "@/lib/api";
@@ -10,10 +10,13 @@ import { downloadCsv, toCsv } from "@/lib/csv";
 import { formatDateTime } from "@/lib/format";
 import { mutate, useStore } from "@/lib/store";
 import type { ActivityAction } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 const GROUP_TONE: Record<string, Tone> = { auth: "neutral", user: "info", company: "info", project: "warning", file: "accent", folder: "accent", export: "success", demo: "danger" };
 
 export default function ActivityPage() {
+  const t = useT();
+  const actionLabel = useActionLabel();
   const { state, user } = useStore();
   const { toast } = useToast();
   if (!state || !user) return null;
@@ -21,8 +24,8 @@ export default function ActivityPage() {
   const rows = state.activity.map((a) => ({
     ...a,
     actor: actorName(state, a.actorId),
-    company: state.companies.find((c) => c.id === a.companyId)?.name ?? "Atlas team",
-    event: ACTION_LABEL[a.action],
+    company: state.companies.find((c) => c.id === a.companyId)?.name ?? t("Atlas team"),
+    event: actionLabel(a.action),
   }));
   type Row = (typeof rows)[number];
 
@@ -38,17 +41,17 @@ export default function ActivityPage() {
 
   return (
     <>
-      <PageHeader title="Activity log" description="Audit trail of sign-ins, edits, uploads, downloads and shares." />
+      <PageHeader title={t("Activity log")} description={t("Audit trail of sign-ins, edits, uploads, downloads and shares.")} />
       <Card>
         <DataTable
-          label="Activity log"
+          label={t("Activity log")}
           rows={rows}
           columns={columns}
           rowKey={(a) => a.id}
           searchKeys={["actor", "target", "company"]}
           searchPlaceholder="Search user, target or client"
           filters={[
-            { key: "action", label: "Event", options: actions.map((a) => ({ value: a, label: a })) },
+            { key: "action", label: "Event", options: actions.map((a) => ({ value: a, label: actionLabel(a) })) },
             { key: "companyId", label: "Client", options: state.companies.map((c) => ({ value: c.id, label: c.name })) },
           ]}
           initialSort={{ key: "at", dir: "desc" }}
@@ -72,10 +75,10 @@ export default function ActivityPage() {
                 toast(`Exported ${visible.length} entries to CSV.`);
               }}
             >
-              <Download className="size-4" /> Export CSV
+              <Download className="size-4" /> {t("Export CSV")}
             </Button>
           )}
-          empty={<EmptyState icon={ActivityIcon} title="No activity matches" text="Try a different search or clear the filters." />}
+          empty={<EmptyState icon={ActivityIcon} title={t("No activity matches")} text={t("Try a different search or clear the filters.")} />}
         />
       </Card>
     </>

@@ -1,4 +1,5 @@
 import type { Activity, ActivityAction, DemoState } from "@/lib/types";
+import { useLang } from "@/lib/i18n";
 
 export const ACTION_LABEL: Record<ActivityAction, string> = {
   "auth.login": "signed in",
@@ -24,10 +25,17 @@ export function actorName(state: DemoState, id: string) {
 }
 
 export function ActivityText({ state, activity: a }: { state: DemoState; activity: Activity }) {
+  const actionLabel = useActionLabel();
   return (
     <p className="min-w-0">
-      <span className="font-medium">{actorName(state, a.actorId)}</span> <span className="text-muted">{ACTION_LABEL[a.action]}</span>{" "}
+      <span className="font-medium">{actorName(state, a.actorId)}</span> <span className="text-muted">{actionLabel(a.action)}</span>{" "}
       {a.action !== "auth.login" && <span className="break-words">{a.target}</span>}
     </p>
   );
+}
+
+/** The verb for an activity in the interface language. */
+export function useActionLabel() {
+  const { t, lang } = useLang();
+  return (a: ActivityAction) => (lang === "tr" ? t(a) : ACTION_LABEL[a]);
 }

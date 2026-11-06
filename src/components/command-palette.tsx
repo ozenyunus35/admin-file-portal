@@ -1,11 +1,12 @@
 "use client";
 
-import { Building2, CornerDownLeft, FileText, FolderKanban, Moon, RotateCcw, Search, User as UserIcon } from "lucide-react";
+import { Building2, CornerDownLeft, FileText, FolderKanban, Moon, RotateCcw, Search, User as UserIcon, Languages } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { DemoState, User } from "@/lib/types";
 import { NAV } from "./nav";
 import { cx } from "./ui";
+import { useLang } from "@/lib/i18n";
 
 interface Item {
   id: string;
@@ -18,6 +19,7 @@ interface Item {
 
 /** ⌘K / Ctrl+K search across pages, clients, projects, people and files the current user can see. */
 export function CommandPalette({ open, onClose, state, user, onReset }: { open: boolean; onClose: () => void; state: DemoState; user: User; onReset: () => void }) {
+  const { t, lang, setLang } = useLang();
   const router = useRouter();
   const ref = useRef<HTMLDialogElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -42,17 +44,17 @@ export function CommandPalette({ open, onClose, state, user, onReset }: { open: 
       router.push(href);
     };
     const mine = <T extends { companyId: string | null }>(list: T[]) => (admin ? list : list.filter((x) => x.companyId === user.companyId));
-    const company = (id: string | null) => state.companies.find((c) => c.id === id)?.name ?? "Atlas team";
+    const company = (id: string | null) => state.companies.find((c) => c.id === id)?.name ?? t("Atlas team");
     return [
-      ...NAV.filter((n) => admin || !n.admin).map((n) => ({ id: n.href, group: "Pages", label: n.label, icon: n.icon, run: go(n.href) })),
-      ...(admin ? state.companies.map((c) => ({ id: c.id, group: "Clients", label: c.name, hint: `${c.industry} · ${c.plan}`, icon: Building2, run: go("/clients") })) : []),
+      ...NAV.filter((n) => admin || !n.admin).map((n) => ({ id: n.href, group: "Pages", label: t(n.label), icon: n.icon, run: go(n.href) })),
+      ...(admin ? state.companies.map((c) => ({ id: c.id, group: "Clients", label: c.name, hint: `${t(c.industry)} · ${t(c.plan)}`, icon: Building2, run: go("/clients") })) : []),
       ...mine(state.projects).map((p) => ({ id: p.id, group: "Projects", label: p.name, hint: company(p.companyId), icon: FolderKanban, run: go("/projects") })),
       ...(admin ? state.users.map((u) => ({ id: u.id, group: "People", label: u.name, hint: u.email, icon: UserIcon, run: go("/users") })) : []),
       ...mine(state.files).map((f) => ({ id: f.id, group: "Files", label: f.name, hint: company(f.companyId), icon: FileText, run: go("/files") })),
       {
         id: "theme",
         group: "Actions",
-        label: "Toggle light / dark theme",
+        label: t("Toggle light / dark theme"),
         icon: Moon,
         run: () => {
           const next = !document.documentElement.classList.contains("dark");
@@ -63,9 +65,10 @@ export function CommandPalette({ open, onClose, state, user, onReset }: { open: 
           onClose();
         },
       },
-      { id: "reset", group: "Actions", label: "Reset demo data", icon: RotateCcw, run: () => (onClose(), onReset()) },
+      { id: "lang", group: "Actions", label: lang === "tr" ? "Switch to English" : "Türkçeye geç", icon: Languages, run: () => (onClose(), setLang(lang === "tr" ? "en" : "tr")) },
+      { id: "reset", group: "Actions", label: t("Reset demo data"), icon: RotateCcw, run: () => (onClose(), onReset()) },
     ];
-  }, [state, user, router, onClose, onReset]);
+  }, [state, user, router, onClose, onReset, t, lang, setLang]);
 
   const results = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -94,7 +97,7 @@ export function CommandPalette({ open, onClose, state, user, onReset }: { open: 
   return (
     <dialog
       ref={ref}
-      aria-label="Search"
+      aria-label={t("Search")}
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
       className="mx-auto mt-[14vh] w-[calc(100%-2rem)] max-w-[560px] overflow-hidden rounded-xl border-0 bg-surface p-0 text-text shadow-pop"
@@ -110,24 +113,24 @@ export function CommandPalette({ open, onClose, state, user, onReset }: { open: 
                 setQ(e.target.value);
                 setActive(0);
               }}
-              placeholder="Search pages, clients, projects, people, files…"
-              aria-label="Search everything"
+              placeholder={t("Search pages, clients, projects, people, files…")}
+              aria-label={t("Search everything")}
               role="combobox"
               aria-expanded="true"
               aria-controls="cmdk-list"
               aria-activedescendant={results[active] ? `cmdk-${results[active].id}` : undefined}
               className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-faint focus-visible:outline-none"
             />
-            <kbd className="rounded border border-border px-1.5 text-[11px] text-faint">Esc</kbd>
+            <kbd className="rounded border border-border px-1.5 text-[11px] text-faint">{t("Esc")}</kbd>
           </div>
           <ul id="cmdk-list" ref={listRef} role="listbox" className="max-h-[50vh] overflow-y-auto p-1.5">
-            {results.length === 0 && <li className="px-3 py-10 text-center text-muted">No results for “{q}”</li>}
+            {results.length === 0 && <li className="px-3 py-10 text-center text-muted">{t("No results for “{q}”", { q })}</li>}
             {results.map((r, i) => {
               const header = r.group !== lastGroup;
               lastGroup = r.group;
               return (
                 <li key={`${r.group}-${r.id}`} role="presentation">
-                  {header && <p className="px-2.5 pt-2.5 pb-1 text-[11px] font-medium text-faint">{r.group}</p>}
+                  {header && <p className="px-2.5 pt-2.5 pb-1 text-[11px] font-medium text-faint">{t(r.group)}</p>}
                   <div
                     id={`cmdk-${r.id}`}
                     role="option"
@@ -147,9 +150,9 @@ export function CommandPalette({ open, onClose, state, user, onReset }: { open: 
             })}
           </ul>
           <div className="flex items-center gap-4 border-t border-border px-4 py-2 text-[11px] text-faint">
-            <span>↑↓ navigate</span>
-            <span>↵ open</span>
-            <span className="ml-auto">{items.length} items indexed</span>
+            <span>{t("↑↓ navigate")}</span>
+            <span>{t("↵ open")}</span>
+            <span className="ml-auto">{t("{n} items indexed", { n: items.length })}</span>
           </div>
         </div>
       )}

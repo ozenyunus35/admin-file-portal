@@ -48,7 +48,8 @@ You can also sign in with any seeded email, for example `daniel@atlasportal.exam
   can revoke only their own links, and revokes and link downloads go into the activity log.
 
 **Everywhere**
-- Command palette (⌘K / Ctrl+K): search pages, clients, projects, people and files, keyboard navigation.
+- Command palette (⌘K / Ctrl+K): search pages, clients, projects, people and files, keyboard navigation, switch theme or language.
+- English and Turkish interface on every screen, including the sign-in page, the shared-file page, statuses, table headers, error messages and toasts. Dates, sizes and amounts follow the language.
 - Notifications panel and short transitions that respect `prefers-reduced-motion`.
 - Restrained product UI: neutral greys with one accent colour, Inter, compact 13px base size, status glyphs.
 - Role-based access: clients never see admin pages or other companies' data; the mock API enforces it too, and

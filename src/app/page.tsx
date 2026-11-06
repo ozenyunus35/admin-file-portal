@@ -9,10 +9,12 @@ import { Avatar, Button, Field, inputClass } from "@/components/ui";
 import { canSignIn, log } from "@/lib/api";
 import { DEMO_ADMIN_ID, DEMO_CLIENT_ID } from "@/lib/seed";
 import { getState, setSession, setState, useStore } from "@/lib/store";
+import { LangToggle, useT } from "@/lib/i18n";
 
 const SOURCE_URL = "https://github.com/ozenyunus35/admin-file-portal";
 
 export default function LoginPage() {
+  const t = useT();
   const router = useRouter();
   const { state, user, ready } = useStore();
   const [email, setEmail] = useState("");
@@ -49,14 +51,15 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <div className="flex justify-end p-3">
+      <div className="flex items-center justify-end gap-1 p-3">
+        <LangToggle />
         <ThemeToggle />
       </div>
       <main className="flex flex-1 items-center justify-center px-4 pb-16">
         <div className="w-full max-w-[380px] animate-enter">
           <LogoMark size={32} />
-          <h1 className="mt-6 text-xl font-semibold tracking-[-0.01em]">Try the live demo</h1>
-          <p className="mt-1.5 text-muted">Atlas Portal is an admin dashboard and client file portal. Pick a role to explore; all data is synthetic and stays in your browser.</p>
+          <h1 className="mt-6 text-xl font-semibold tracking-[-0.01em]">{t("Try the live demo")}</h1>
+          <p className="mt-1.5 text-muted">{t("Atlas Portal is an admin dashboard and client file portal. Pick a role to explore; all data is synthetic and stays in your browser.")}</p>
 
           <div className="mt-6 overflow-hidden rounded-lg border border-border bg-surface shadow-card">
             {roles.map(({ u, role, who, desc }, i) => (
@@ -68,9 +71,9 @@ export default function LoginPage() {
               >
                 {u ? <Avatar name={u.name} size={32} /> : <span className="size-8 rounded-full bg-surface-3" />}
                 <span className="min-w-0 flex-1">
-                  <span className="block font-medium">Try as {role}</span>
-                  <span className="block truncate text-xs text-muted">{who ?? "Loading…"}</span>
-                  <span className="block text-xs text-faint">{desc}</span>
+                  <span className="block font-medium">{t("Try as {role}", { role: t(role) })}</span>
+                  <span className="block truncate text-xs text-muted">{who ?? t("Loading…")}</span>
+                  <span className="block text-xs text-faint">{t(desc)}</span>
                 </span>
                 <ChevronRight className="size-4 text-faint transition-transform group-hover:translate-x-0.5 group-hover:text-text" aria-hidden />
               </button>
@@ -79,12 +82,12 @@ export default function LoginPage() {
 
           <div className="my-6 flex items-center gap-3 text-xs text-faint">
             <span className="h-px flex-1 bg-border" />
-            or sign in with any demo email
+            {t("or sign in with any demo email")}
             <span className="h-px flex-1 bg-border" />
           </div>
 
           <form onSubmit={onSubmit} noValidate className="space-y-3">
-            <Field label="Email" error={error} hint="e.g. daniel@atlasportal.example">
+            <Field label={t("Email")} error={error} hint={t("e.g. daniel@atlasportal.example")}>
               {(id, describedBy) => (
                 <input
                   id={id}
@@ -98,19 +101,19 @@ export default function LoginPage() {
                   aria-invalid={!!error}
                   aria-describedby={describedBy}
                   className={`${inputClass} h-9`}
-                  placeholder="name@company.example"
+                  placeholder={t("name@company.example")}
                 />
               )}
             </Field>
             <Button type="submit" variant="primary" className="h-9 w-full" disabled={!ready}>
-              Continue
+              {t("Continue")}
             </Button>
           </form>
 
           <p className="mt-10 text-xs text-faint">
-            Next.js · TypeScript · mock backend in the browser ·{" "}
+            {t("Next.js · TypeScript · mock backend in the browser ·")}{" "}
             <a href={SOURCE_URL} className="text-muted underline-offset-2 hover:text-text hover:underline">
-              Source code
+              {t("Source code")}
             </a>
           </p>
         </div>

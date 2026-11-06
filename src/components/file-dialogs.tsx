@@ -13,6 +13,7 @@ import type { DemoState, FileItem, User } from "@/lib/types";
 import { PdfPreview } from "./pdf-preview";
 import { useToast } from "./toast";
 import { Button, EmptyState, Field, Modal, inputClass } from "./ui";
+import { useT } from "@/lib/i18n";
 
 export function FileIcon({ file, className = "size-5" }: { file: Pick<FileItem, "mime" | "name">; className?: string }) {
   const kind = previewKind(file.mime, file.name);
@@ -85,6 +86,7 @@ async function inspect(file: FileItem, blob: Blob): Promise<Preview> {
 }
 
 export function PreviewDialog({ file, state, user, onClose }: { file: FileItem | null; state: DemoState; user: User; onClose: () => void }) {
+  const t = useT();
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const preview: Preview = loaded && loaded.fileId === file?.id ? loaded : { status: "loading" };
   const download = useDownload(user);
@@ -109,7 +111,7 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [file?.id]);
 
-  const uploader = state.users.find((u) => u.id === file?.uploadedBy)?.name ?? "Unknown";
+  const uploader = state.users.find((u) => u.id === file?.uploadedBy)?.name ?? t("Unknown");
 
   return (
     <Modal
@@ -122,11 +124,11 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
           <>
             {preview.status === "ready" && preview.openUrl && (
               <a href={preview.openUrl} target="_blank" rel="noopener noreferrer" className="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-surface px-4 text-sm font-medium hover:bg-surface-2">
-                <ExternalLink className="size-4" aria-hidden /> Open in new tab
+                <ExternalLink className="size-4" aria-hidden /> {t("Open in new tab")}
               </a>
             )}
             <Button variant="primary" onClick={() => download(file)}>
-              <Download className="size-4" /> Download
+              <Download className="size-4" /> {t("Download")}
             </Button>
           </>
         )
@@ -135,23 +137,23 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
       {file && (
         <>
           <p className="mb-3 text-xs text-muted">
-            {formatBytes(file.size)} · uploaded by {uploader} · {formatDateTime(file.createdAt)}
+            {formatBytes(file.size)} · {t("uploaded by {name}", { name: uploader })} · {formatDateTime(file.createdAt)}
             {file.seed && " · synthetic sample content"}
           </p>
           {preview.status === "ready" && preview.note && (
             <p className="mb-3 rounded-lg border border-border bg-surface-2 px-3 py-2 text-xs text-warning" role="note">
-              {preview.note}
+              {t(preview.note)}
             </p>
           )}
           <div className="overflow-hidden rounded-lg border border-border bg-surface-2">
             {preview.status === "loading" && (
               <div className="flex h-72 items-center justify-center text-muted" role="status">
                 <Loader2 className="size-6 animate-spin" aria-hidden />
-                <span className="sr-only">Loading preview</span>
+                <span className="sr-only">{t("Loading preview")}</span>
               </div>
             )}
-            {preview.status === "missing" && <EmptyState icon={File} title="File content not found" text="The bytes for this upload are no longer in this browser's storage. Delete the entry or upload it again." />}
-            {preview.status === "empty" && <EmptyState icon={File} title="This file is empty" text="It has no content (0 bytes). Ask the sender to upload it again." />}
+            {preview.status === "missing" && <EmptyState icon={File} title={t("File content not found")} text={t("The bytes for this upload are no longer in this browser's storage. Delete the entry or upload it again.")} />}
+            {preview.status === "empty" && <EmptyState icon={File} title={t("This file is empty")} text={t("It has no content (0 bytes). Ask the sender to upload it again.")} />}
             {preview.status === "ready" && preview.kind === "image" && <ImagePreview key={file.id} url={preview.url} name={file.name} />}
             {preview.status === "ready" && preview.kind === "pdf" && <PdfPreview blob={preview.blob} name={file.name} />}
             {preview.status === "ready" && preview.kind === "text" && preview.text !== undefined && (
@@ -175,8 +177,8 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
                 <pre className="max-h-[60vh] overflow-auto p-4 font-mono text-xs whitespace-pre-wrap">{preview.text}</pre>
               )
             )}
-            {preview.status === "ready" && preview.kind === "binary" && <EmptyState icon={File} title="This file isn't readable text" text="Its name says text, but the content is binary data. Download it to open it with the right app." />}
-            {preview.status === "ready" && preview.kind === "none" && <EmptyState icon={File} title="No preview for this file type" text="Download the file to open it on your device." />}
+            {preview.status === "ready" && preview.kind === "binary" && <EmptyState icon={File} title={t("This file isn't readable text")} text={t("Its name says text, but the content is binary data. Download it to open it with the right app.")} />}
+            {preview.status === "ready" && preview.kind === "none" && <EmptyState icon={File} title={t("No preview for this file type")} text={t("Download the file to open it on your device.")} />}
           </div>
         </>
       )}
@@ -185,6 +187,7 @@ export function PreviewDialog({ file, state, user, onClose }: { file: FileItem |
 }
 
 export function ShareDialog({ file, state, user, onClose }: { file: FileItem | null; state: DemoState; user: User; onClose: () => void }) {
+  const t = useT();
   const { toast, run } = useToast();
   const [days, setDays] = useState(7);
   const [copied, setCopied] = useState<string | null>(null);
@@ -203,18 +206,18 @@ export function ShareDialog({ file, state, user, onClose }: { file: FileItem | n
   };
 
   return (
-    <Modal open={!!file} onClose={onClose} title={file ? `Share ${file.name}` : ""}>
+    <Modal open={!!file} onClose={onClose} title={file ? t("Share {name}", { name: file.name }) : ""}>
       {file && (
         <div className="space-y-5">
-          <p className="text-sm text-muted">Anyone with the link can download this file until it expires. In this demo, links only open in the same browser because data never leaves it.</p>
+          <p className="text-sm text-muted">{t("Anyone with the link can download this file until it expires. In this demo, links only open in the same browser because data never leaves it.")}</p>
           <div className="flex items-end gap-2">
             <div className="flex-1">
-              <Field label="Link expires after">
+              <Field label={t("Link expires after")}>
                 {(id) => (
                   <select id={id} className={inputClass} value={days} onChange={(e) => setDays(Number(e.target.value))}>
-                    <option value={1}>1 day</option>
-                    <option value={7}>7 days</option>
-                    <option value={30}>30 days</option>
+                    <option value={1}>{t("1 day")}</option>
+                    <option value={7}>{t("7 days")}</option>
+                    <option value={30}>{t("30 days")}</option>
                   </select>
                 )}
               </Field>
@@ -230,29 +233,29 @@ export function ShareDialog({ file, state, user, onClose }: { file: FileItem | n
                 }
               }}
             >
-              <Link2 className="size-4" /> Create link
+              <Link2 className="size-4" /> {t("Create link")}
             </Button>
           </div>
 
           {links.length > 0 && (
             <div>
-              <h3 className="mb-2 text-sm font-medium">Active links</h3>
+              <h3 className="mb-2 text-sm font-medium">{t("Active links")}</h3>
               <ul className="space-y-2">
                 {links.map((l) => (
                   <li key={l.id} className="rounded-lg border border-border p-3">
                     <div className="flex items-center gap-2">
-                      <input readOnly value={urlFor(l.token)} aria-label="Share link" className={`${inputClass} h-9 font-mono text-xs`} onFocus={(e) => e.target.select()} />
-                      <button onClick={() => copy(l.token)} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-text" aria-label="Copy link">
+                      <input readOnly value={urlFor(l.token)} aria-label={t("Share link")} className={`${inputClass} h-9 font-mono text-xs`} onFocus={(e) => e.target.select()} />
+                      <button onClick={() => copy(l.token)} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-text" aria-label={t("Copy link")}>
                         {copied === l.token ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
                       </button>
                       {canRevokeShare(user, l) && (
-                        <button onClick={() => run(() => mutate((s) => revokeShare(s, user, l.id)), "Link revoked.")} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-danger" aria-label="Revoke link">
+                        <button onClick={() => run(() => mutate((s) => revokeShare(s, user, l.id)), "Link revoked.")} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-danger" aria-label={t("Revoke link")}>
                           <Trash2 className="size-4" />
                         </button>
                       )}
                     </div>
                     <p className="mt-1.5 text-xs text-muted">
-                      Expires {formatDate(l.expiresAt)} · {l.downloads} download{l.downloads === 1 ? "" : "s"}
+                      {t("Expires {date}", { date: formatDate(l.expiresAt) })} · {t(l.downloads === 1 ? "{n} download" : "{n} downloads", { n: l.downloads })}
                     </p>
                   </li>
                 ))}
@@ -267,12 +270,13 @@ export function ShareDialog({ file, state, user, onClose }: { file: FileItem | n
 
 /** Shows an image, or says so when the browser cannot decode it (iPhone HEIC photos, TIFF scans). */
 function ImagePreview({ url, name }: { url: string; name: string }) {
+  const t = useT();
   const [broken, setBroken] = useState(false);
   if (broken)
     return (
       <EmptyState
         icon={FileImage}
-        title="This image can't be shown in the browser"
+        title={t("This image can't be shown in the browser")}
         text={`${name.split(".").pop()?.toUpperCase() ?? "This"} photos (common from iPhones and scanners) aren't supported by web browsers. Download it to open it on your device.`}
       />
     );

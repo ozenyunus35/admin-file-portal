@@ -10,10 +10,12 @@ import { downloadCsv, toCsv } from "@/lib/csv";
 import { timeAgo } from "@/lib/format";
 import { mutate, useStore } from "@/lib/store";
 import type { DemoState, User } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 const EMPTY: UserInput = { name: "", email: "", role: "client", title: "", companyId: null };
 
 function UserForm({ state, initial, onSubmit, onCancel, submitLabel }: { state: DemoState; initial: UserInput; onSubmit: (v: UserInput) => string | null; onCancel: () => void; submitLabel: string }) {
+  const t = useT();
   const [v, setV] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const set = (patch: Partial<UserInput>) => {
@@ -29,24 +31,24 @@ function UserForm({ state, initial, onSubmit, onCancel, submitLabel }: { state: 
       }}
       className="space-y-4"
     >
-      <Field label="Full name">{(id) => <input id={id} className={inputClass} value={v.name} onChange={(e) => set({ name: e.target.value })} required />}</Field>
-      <Field label="Email">{(id) => <input id={id} type="email" className={inputClass} value={v.email} onChange={(e) => set({ email: e.target.value })} required />}</Field>
+      <Field label={t("Full name")}>{(id) => <input id={id} className={inputClass} value={v.name} onChange={(e) => set({ name: e.target.value })} required />}</Field>
+      <Field label={t("Email")}>{(id) => <input id={id} type="email" className={inputClass} value={v.email} onChange={(e) => set({ email: e.target.value })} required />}</Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Role">
+        <Field label={t("Role")}>
           {(id) => (
             <select id={id} className={inputClass} value={v.role} onChange={(e) => set({ role: e.target.value as User["role"] })}>
-              <option value="client">Client</option>
-              <option value="admin">Admin</option>
+              <option value="client">{t("Client")}</option>
+              <option value="admin">{t("Admin")}</option>
             </select>
           )}
         </Field>
-        <Field label="Job title">{(id) => <input id={id} className={inputClass} value={v.title} onChange={(e) => set({ title: e.target.value })} />}</Field>
+        <Field label={t("Job title")}>{(id) => <input id={id} className={inputClass} value={v.title} onChange={(e) => set({ title: e.target.value })} />}</Field>
       </div>
       {v.role === "client" && (
-        <Field label="Company">
+        <Field label={t("Company")}>
           {(id) => (
             <select id={id} className={inputClass} value={v.companyId ?? ""} onChange={(e) => set({ companyId: e.target.value || null })}>
-              <option value="">Select a company</option>
+              <option value="">{t("Select a company")}</option>
               {state.companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -63,7 +65,7 @@ function UserForm({ state, initial, onSubmit, onCancel, submitLabel }: { state: 
       )}
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" onClick={onCancel}>
-          Cancel
+          {t("Cancel")}
         </Button>
         <Button type="submit" variant="primary">
           {submitLabel}
@@ -74,12 +76,13 @@ function UserForm({ state, initial, onSubmit, onCancel, submitLabel }: { state: 
 }
 
 export default function UsersPage() {
+  const t = useT();
   const { state, user: me } = useStore();
   const { toast, run } = useToast();
   const [editing, setEditing] = useState<User | "new" | null>(null);
   if (!state || !me) return null;
 
-  const companyName = (id: string | null) => state.companies.find((c) => c.id === id)?.name ?? "Atlas team";
+  const companyName = (id: string | null) => state.companies.find((c) => c.id === id)?.name ?? t("Atlas team");
   const rows = state.users.map((u) => ({ ...u, company: companyName(u.companyId) }));
   type Row = (typeof rows)[number];
 
@@ -114,9 +117,9 @@ export default function UsersPage() {
         </div>
       ),
     },
-    { key: "role", header: "Role", sortable: true, render: (u) => <Badge tone={u.role === "admin" ? "accent" : "neutral"}>{u.role}</Badge> },
+    { key: "role", header: "Role", sortable: true, render: (u) => <Badge tone={u.role === "admin" ? "accent" : "neutral"}>{t(u.role)}</Badge> },
     { key: "company", header: "Company", sortable: true, hideOnMobile: true, render: (u) => <span className="text-muted">{u.company}</span> },
-    { key: "status", header: "Status", sortable: true, render: (u) => <Badge tone={STATUS_TONE[u.status]}>{u.status}</Badge> },
+    { key: "status", header: "Status", sortable: true, render: (u) => <Badge tone={STATUS_TONE[u.status]}>{t(u.status)}</Badge> },
     { key: "lastActiveAt", header: "Last active", sortable: true, hideOnMobile: true, sortValue: (u) => (u.lastActiveAt ? -Date.parse(u.lastActiveAt) : null), render: (u) => <span className="text-muted">{timeAgo(u.lastActiveAt)}</span> },
     {
       key: "id",
@@ -160,17 +163,17 @@ export default function UsersPage() {
   return (
     <>
       <PageHeader
-        title="Users"
-        description={`${state.users.length} people across ${state.companies.length} clients and the Atlas team.`}
+        title={t("Users")}
+        description={t("{n} people across {m} clients and the Atlas team.", { n: state.users.length, m: state.companies.length })}
         actions={
           <Button variant="primary" onClick={() => setEditing("new")}>
-            <UserPlus className="size-4" /> Invite user
+            <UserPlus className="size-4" /> {t("Invite user")}
           </Button>
         }
       />
       <Card>
         <DataTable
-          label="Users"
+          label={t("Users")}
           rows={rows}
           columns={columns}
           rowKey={(u) => u.id}
@@ -184,14 +187,14 @@ export default function UsersPage() {
           initialSort={{ key: "name", dir: "asc" }}
           toolbar={(visible) => (
             <Button size="sm" onClick={() => exportCsv(visible)} disabled={visible.length === 0}>
-              <Download className="size-4" /> Export CSV
+              <Download className="size-4" /> {t("Export CSV")}
             </Button>
           )}
-          empty={<EmptyState icon={Users} title="No users match" text="Try a different search or clear the filters." />}
+          empty={<EmptyState icon={Users} title={t("No users match")} text={t("Try a different search or clear the filters.")} />}
         />
       </Card>
 
-      <Modal open={editing !== null} onClose={() => setEditing(null)} title={editing === "new" ? "Invite user" : "Edit user"}>
+      <Modal open={editing !== null} onClose={() => setEditing(null)} title={editing === "new" ? t("Invite user") : t("Edit user")}>
         {editing && (
           <UserForm
             key={editing === "new" ? "new" : editing.id}
@@ -199,7 +202,7 @@ export default function UsersPage() {
             initial={editing === "new" ? EMPTY : { name: editing.name, email: editing.email, role: editing.role, title: editing.title, companyId: editing.companyId }}
             onSubmit={submit}
             onCancel={() => setEditing(null)}
-            submitLabel={editing === "new" ? "Send invite" : "Save changes"}
+            submitLabel={editing === "new" ? t("Send invite") : t("Save changes")}
           />
         )}
       </Modal>

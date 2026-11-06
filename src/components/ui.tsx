@@ -4,6 +4,7 @@ import { Loader2, X } from "lucide-react";
 import { forwardRef, useEffect, useId, useRef } from "react";
 import { initials } from "@/lib/format";
 import type { ProjectStatus } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 export const cx = (...c: Array<string | false | null | undefined>) => c.filter(Boolean).join(" ");
 
@@ -136,6 +137,7 @@ export function Avatar({ name, size = 24, square = false }: { name: string; size
 }
 
 export function Field({ label, error, hint, children }: { label: string; error?: string; hint?: string; children: (id: string, describedBy?: string) => React.ReactNode }) {
+  const t = useT();
   const id = useId();
   const msgId = error || hint ? `${id}-msg` : undefined;
   return (
@@ -146,7 +148,7 @@ export function Field({ label, error, hint, children }: { label: string; error?:
       {children(id, msgId)}
       {(error || hint) && (
         <p id={msgId} className={cx("text-xs", error ? "text-danger" : "text-faint")}>
-          {error ?? hint}
+          {error ? t(error) : hint}
         </p>
       )}
     </div>
@@ -157,6 +159,7 @@ export const inputClass =
   "h-8 w-full rounded-md border border-border bg-surface px-2.5 text-[13px] shadow-card transition-colors placeholder:text-faint hover:border-border-strong focus:border-accent focus:outline-none aria-[invalid=true]:border-danger";
 
 export function Modal({ open, onClose, title, children, footer, wide }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode; footer?: React.ReactNode; wide?: boolean }) {
+  const t = useT();
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   useEffect(() => {
@@ -179,7 +182,7 @@ export function Modal({ open, onClose, title, children, footer, wide }: { open: 
             <h2 id={titleId} className="truncate text-[13px] font-semibold">
               {title}
             </h2>
-            <button onClick={onClose} className="rounded-md p-1 text-muted hover:bg-surface-2 hover:text-text" aria-label="Close dialog">
+            <button onClick={onClose} className="rounded-md p-1 text-muted hover:bg-surface-2 hover:text-text" aria-label={t("Close dialog")}>
               <X className="size-4" />
             </button>
           </div>
@@ -276,3 +279,6 @@ export function ProgressRing({ value, size = 16, stroke = 2, label }: { value: n
     </span>
   );
 }
+
+/** Display names for project statuses, translated where they are shown. */
+export const STATUS_NAME: Record<ProjectStatus, string> = { planning: "Planning", active: "Active", review: "Review", completed: "Completed", "on-hold": "On hold" };

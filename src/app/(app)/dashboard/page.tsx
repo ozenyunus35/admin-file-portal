@@ -4,26 +4,28 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ActivityText } from "@/components/activity-text";
-import { Avatar, Card, CardHeader, Delta, Meter, PageHeader, ProgressRing, STATUS_COLOR, Sparkline, StatusIcon, cx } from "@/components/ui";
+import { Avatar, Card, CardHeader, Delta, Meter, PageHeader, ProgressRing, STATUS_COLOR, Sparkline, StatusIcon, cx, STATUS_NAME } from "@/components/ui";
 import { TrendChart, TrendLegend } from "@/components/uploads-chart";
 import { storageUsed } from "@/lib/api";
-import { formatBytes, formatMoney, timeAgo } from "@/lib/format";
+import { formatBytes, formatMoney, timeAgo, uiLocale } from "@/lib/format";
 import { useStore } from "@/lib/store";
 import { kpis, periodTotals, projectsByStatus, storageByCompany, trendByDay } from "@/lib/stats";
 import type { DemoState, Project } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 const DAY = 86_400_000;
 const RANGES = [7, 14, 30] as const;
 type Range = (typeof RANGES)[number];
 
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString(uiLocale(), { month: "short", day: "numeric" });
 
 function RangeSwitch({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
+  const t = useT();
   return (
-    <div role="group" aria-label="Date range" className="inline-flex h-8 items-center rounded-md border border-border bg-surface p-0.5 shadow-card">
+    <div role="group" aria-label={t("Date range")} className="inline-flex h-8 items-center rounded-md border border-border bg-surface p-0.5 shadow-card">
       {RANGES.map((r) => (
         <button key={r} aria-pressed={value === r} onClick={() => onChange(r)} className={cx("h-full rounded-[5px] px-2.5 text-xs font-medium transition-colors", value === r ? "bg-surface-3 text-text" : "text-muted hover:text-text")}>
-          {r}d
+          {t("{n}d", { n: r })}
         </button>
       ))}
     </div>
@@ -72,6 +74,7 @@ function ActivityList({ state, companyId, limit = 8 }: { state: DemoState; compa
 }
 
 function DueSoon({ state, projects }: { state: DemoState; projects: Project[] }) {
+  const t = useT();
   const [now] = useState(() => Date.now());
   const list = projects
     .filter((p) => p.status !== "completed")
@@ -89,7 +92,7 @@ function DueSoon({ state, projects }: { state: DemoState; projects: Project[] })
               <p className="truncate text-xs text-muted">{state.companies.find((c) => c.id === p.companyId)?.name}</p>
             </div>
             <span className={cx("shrink-0 text-xs tabular-nums", late ? "text-danger" : "text-muted")}>
-              {late ? `Overdue ${Math.ceil((now - Date.parse(p.dueDate)) / DAY)}d` : shortDate(p.dueDate)}
+              {late ? t("Overdue {n}d", { n: Math.ceil((now - Date.parse(p.dueDate)) / DAY) }) : shortDate(p.dueDate)}
             </span>
           </li>
         );
@@ -99,15 +102,16 @@ function DueSoon({ state, projects }: { state: DemoState; projects: Project[] })
 }
 
 function StatusList({ state, companyId }: { state: DemoState; companyId?: string }) {
+  const t = useT();
   const statuses = projectsByStatus(state, companyId);
   const max = Math.max(1, ...statuses.map((s) => s.count));
   return (
     <ul className="space-y-3 p-4">
       {statuses.map((s) => (
         <li key={s.status} className="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1.5">
-          <span className="flex items-center gap-2 capitalize">
+          <span className="flex items-center gap-2">
             <StatusIcon status={s.status} />
-            {s.status.replace("-", " ")}
+            {t(STATUS_NAME[s.status])}
           </span>
           <span className="text-right text-muted tabular-nums">{s.count}</span>
           <span className="col-span-2 h-1 overflow-hidden rounded-full bg-surface-3">
@@ -120,6 +124,7 @@ function StatusList({ state, companyId }: { state: DemoState; companyId?: string
 }
 
 function AdminDashboard({ state }: { state: DemoState }) {
+  const t = useT();
   const [range, setRange] = useState<Range>(30);
   const k = useMemo(() => kpis(state), [state]);
   const trend = useMemo(() => trendByDay(state, 30), [state]);
@@ -131,10 +136,10 @@ function AdminDashboard({ state }: { state: DemoState }) {
 
   return (
     <>
-      <PageHeader title="Dashboard" description={`Activity across ${state.companies.length} clients, last ${range} days.`} actions={<RangeSwitch value={range} onChange={setRange} />} />
+      <PageHeader title={t("Dashboard")} description={t("Activity across {n} clients, last {days} days.", { n: state.companies.length, days: range })} actions={<RangeSwitch value={range} onChange={setRange} />} />
 
       <MetricStrip>
-        <Metric label="Active clients" value={String(k.activeClients)} sub={`of ${state.companies.length} · ${state.companies.filter((c) => c.status === "onboarding").length} onboarding`}>
+        <Metric label={t("Active clients")} value={String(k.activeClients)} sub={t("of {n} · {m} onboarding", { n: state.companies.length, m: state.companies.filter((c) => c.status === "onboarding").length })}>
           <div className="flex -space-x-1">
             {state.companies.map((c) => (
               <span key={c.id} title={c.name}>
@@ -143,8 +148,8 @@ function AdminDashboard({ state }: { state: DemoState }) {
             ))}
           </div>
         </Metric>
-        <Metric label="Active users" value={String(k.activeUsers)} sub={<Delta current={logins7.current} previous={logins7.previous} label="sign-ins vs last week" />} trend={shown.map((p) => p.logins)} />
-        <Metric label="Open projects" value={String(k.openProjects)} sub={`${formatMoney(k.pipelineValue)} open budget`}>
+        <Metric label={t("Active users")} value={String(k.activeUsers)} sub={<Delta current={logins7.current} previous={logins7.previous} label={t("sign-ins vs last week")} />} trend={shown.map((p) => p.logins)} />
+        <Metric label={t("Open projects")} value={String(k.openProjects)} sub={t("{amount} open budget", { amount: formatMoney(k.pipelineValue) })}>
           <div className="flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden>
             {projectsByStatus(state)
               .filter((s) => s.count > 0)
@@ -153,25 +158,25 @@ function AdminDashboard({ state }: { state: DemoState }) {
               ))}
           </div>
         </Metric>
-        <Metric label={`Uploads, ${range} days`} value={String(uploadsInRange)} sub={<Delta current={uploads7.current} previous={uploads7.previous} label="vs last week" />} trend={shown.map((p) => p.uploads)} />
+        <Metric label={t("Uploads, {n} days", { n: range })} value={String(uploadsInRange)} sub={<Delta current={uploads7.current} previous={uploads7.previous} label={t("vs last week")} />} trend={shown.map((p) => p.uploads)} />
       </MetricStrip>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader title="Uploads and sign-ins" meta={<TrendLegend />} />
+          <CardHeader title={t("Uploads and sign-ins")} meta={<TrendLegend />} />
           <div className="px-4 pt-3 pb-2">
             <TrendChart data={shown} />
           </div>
         </Card>
         <Card>
-          <CardHeader title="Projects by status" meta={<HeaderLink href="/projects">View board</HeaderLink>} />
+          <CardHeader title={t("Projects by status")} meta={<HeaderLink href="/projects">{t("View board")}</HeaderLink>} />
           <StatusList state={state} />
         </Card>
       </div>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <Card>
-          <CardHeader title="Storage by client" meta={<HeaderLink href="/clients">All clients</HeaderLink>} />
+          <CardHeader title={t("Storage by client")} meta={<HeaderLink href="/clients">{t("All clients")}</HeaderLink>} />
           <ul className="divide-y divide-border">
             {storage.map((c) => (
               <li key={c.id} className="flex items-center gap-2.5 px-4 py-2.5">
@@ -183,18 +188,18 @@ function AdminDashboard({ state }: { state: DemoState }) {
                       {formatBytes(c.used)} / {formatBytes(c.quota)}
                     </span>
                   </div>
-                  <Meter value={c.used} max={c.quota} label={`${c.name} storage used`} />
+                  <Meter value={c.used} max={c.quota} label={t("{name} storage used", { name: c.name })} />
                 </div>
               </li>
             ))}
           </ul>
         </Card>
         <Card>
-          <CardHeader title="Due soon" meta={`${k.openProjects} open`} />
+          <CardHeader title={t("Due soon")} meta={t("{n} open", { n: k.openProjects })} />
           <DueSoon state={state} projects={state.projects} />
         </Card>
         <Card className="lg:col-span-2 xl:col-span-1">
-          <CardHeader title="Recent activity" meta={<HeaderLink href="/activity">Full log</HeaderLink>} />
+          <CardHeader title={t("Recent activity")} meta={<HeaderLink href="/activity">{t("Full log")}</HeaderLink>} />
           <ActivityList state={state} limit={6} />
         </Card>
       </div>
@@ -203,6 +208,7 @@ function AdminDashboard({ state }: { state: DemoState }) {
 }
 
 function ClientDashboard({ state, companyId }: { state: DemoState; companyId: string }) {
+  const t = useT();
   const company = state.companies.find((c) => c.id === companyId)!;
   const projects = state.projects.filter((p) => p.companyId === company.id);
   const files = state.files.filter((f) => f.companyId === company.id);
@@ -213,34 +219,34 @@ function ClientDashboard({ state, companyId }: { state: DemoState; companyId: st
 
   return (
     <>
-      <PageHeader title="Dashboard" description={`${company.name} · ${company.plan} plan`} />
+      <PageHeader title={t("Dashboard")} description={`${company.name} · ${t("{plan} plan", { plan: t(company.plan) })}`} />
       <MetricStrip>
-        <Metric label="Projects" value={String(projects.length)} sub={`${projects.filter((p) => p.status !== "completed").length} in progress`} />
-        <Metric label="Files" value={String(files.length)} sub={<Delta current={uploads7.current} previous={uploads7.previous} label="uploads vs last week" />} trend={trend.map((p) => p.uploads)} />
-        <Metric label="Storage used" value={formatBytes(used)} sub={`of ${formatBytes(company.quota)}`} />
-        <Metric label="Team members" value={String(team.length)} sub={`${team.filter((u) => u.status === "invited").length} pending invites`} />
+        <Metric label={t("Projects")} value={String(projects.length)} sub={t("{n} in progress", { n: projects.filter((p) => p.status !== "completed").length })} />
+        <Metric label={t("Files")} value={String(files.length)} sub={<Delta current={uploads7.current} previous={uploads7.previous} label={t("uploads vs last week")} />} trend={trend.map((p) => p.uploads)} />
+        <Metric label={t("Storage used")} value={formatBytes(used)} sub={t("of {quota}", { quota: formatBytes(company.quota) })} />
+        <Metric label={t("Team members")} value={String(team.length)} sub={t("{n} pending invites", { n: team.filter((u) => u.status === "invited").length })} />
       </MetricStrip>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
           <Card>
-            <CardHeader title="Your projects" meta={<HeaderLink href="/projects">All projects</HeaderLink>} />
+            <CardHeader title={t("Your projects")} meta={<HeaderLink href="/projects">{t("All projects")}</HeaderLink>} />
             <ul className="divide-y divide-border">
               {projects.map((p) => (
                 <li key={p.id} className="flex items-center gap-3 px-4 py-3">
                   <StatusIcon status={p.status} />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-medium">{p.name}</p>
-                    <p className="text-xs text-muted capitalize">{p.status.replace("-", " ")}</p>
+                    <p className="text-xs text-muted">{t(STATUS_NAME[p.status])}</p>
                   </div>
-                  <span className="hidden text-xs text-muted sm:inline">Due {shortDate(p.dueDate)}</span>
-                  <ProgressRing value={p.progress} label={`${p.name} progress`} />
+                  <span className="hidden text-xs text-muted sm:inline">{t("Due {date}", { date: shortDate(p.dueDate) })}</span>
+                  <ProgressRing value={p.progress} label={t("{name} progress", { name: p.name })} />
                 </li>
               ))}
             </ul>
           </Card>
           <Card>
-            <CardHeader title="Uploads and sign-ins" meta={<TrendLegend />} />
+            <CardHeader title={t("Uploads and sign-ins")} meta={<TrendLegend />} />
             <div className="px-4 pt-3 pb-2">
               <TrendChart data={trend} height={180} />
             </div>
@@ -249,18 +255,18 @@ function ClientDashboard({ state, companyId }: { state: DemoState; companyId: st
         <div className="space-y-4">
           <Card className="p-4">
             <div className="flex items-baseline justify-between">
-              <h2 className="font-medium">Storage</h2>
+              <h2 className="font-medium">{t("Storage")}</h2>
               <span className="text-xs text-muted tabular-nums">
                 {formatBytes(used)} / {formatBytes(company.quota)}
               </span>
             </div>
-            <Meter value={used} max={company.quota} label={`${company.name} storage overview`} className="mt-3" />
+            <Meter value={used} max={company.quota} label={t("{name} storage overview", { name: company.name })} className="mt-3" />
             <Link href="/files" className="mt-3 inline-flex items-center gap-0.5 text-muted hover:text-text">
-              Open file portal <ChevronRight className="size-3.5" aria-hidden />
+              {t("Open file portal")} <ChevronRight className="size-3.5" aria-hidden />
             </Link>
           </Card>
           <Card>
-            <CardHeader title="Recent activity" />
+            <CardHeader title={t("Recent activity")} />
             <ActivityList state={state} companyId={company.id} limit={7} />
           </Card>
         </div>

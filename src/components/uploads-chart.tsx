@@ -2,6 +2,7 @@
 
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import type { TrendPoint } from "@/lib/stats";
+import { useT } from "@/lib/i18n";
 
 const SERIES = [
   { key: "uploads", label: "Uploads", color: "var(--accent)" },
@@ -9,12 +10,13 @@ const SERIES = [
 ] as const;
 
 export function TrendLegend() {
+  const t = useT();
   return (
     <div className="flex items-center gap-3 text-xs text-muted">
       {SERIES.map((s) => (
         <span key={s.key} className="inline-flex items-center gap-1.5">
           <span className="size-2 rounded-[2px]" style={{ background: s.color }} aria-hidden />
-          {s.label}
+          {t(s.label)}
         </span>
       ))}
     </div>
@@ -22,6 +24,7 @@ export function TrendLegend() {
 }
 
 function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: Array<{ dataKey: string; value: number }>; label?: string }) {
+  const t = useT();
   if (!active || !payload?.length) return null;
   return (
     <div className="min-w-36 rounded-md bg-surface px-2.5 py-2 text-xs shadow-pop">
@@ -29,7 +32,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
       {SERIES.map((s) => (
         <p key={s.key} className="flex items-center gap-2">
           <span className="size-2 rounded-[2px]" style={{ background: s.color }} aria-hidden />
-          <span className="text-muted">{s.label}</span>
+          <span className="text-muted">{t(s.label)}</span>
           <span className="ml-auto font-medium tabular-nums">{payload.find((p) => p.dataKey === s.key)?.value ?? 0}</span>
         </p>
       ))}
@@ -39,6 +42,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
 
 /** Daily uploads and sign-ins as grouped bars. A table view sits next to it for screen readers. */
 export function TrendChart({ data, height = 220 }: { data: TrendPoint[]; height?: number }) {
+  const t = useT();
   const total = data.reduce((s, d) => s + d.uploads, 0);
   return (
     <figure>
@@ -56,15 +60,15 @@ export function TrendChart({ data, height = 220 }: { data: TrendPoint[]; height?
         </ResponsiveContainer>
       </div>
       <figcaption className="sr-only">
-        {total} uploads in the last {data.length} days.
+        {t("{n} uploads in the last {days} days.", { n: total, days: data.length })}
       </figcaption>
       <table className="sr-only">
-        <caption>Uploads and sign-ins per day</caption>
+        <caption>{t("Uploads and sign-ins per day")}</caption>
         <thead>
           <tr>
-            <th scope="col">Date</th>
-            <th scope="col">Uploads</th>
-            <th scope="col">Sign-ins</th>
+            <th scope="col">{t("Date")}</th>
+            <th scope="col">{t("Uploads")}</th>
+            <th scope="col">{t("Sign-ins")}</th>
           </tr>
         </thead>
         <tbody>

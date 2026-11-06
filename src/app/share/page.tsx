@@ -11,6 +11,7 @@ import { recordShareDownload, resolveShare } from "@/lib/api";
 import { downloadBlob } from "@/lib/csv";
 import { formatBytes, formatDate } from "@/lib/format";
 import { getState, setState, useStore } from "@/lib/store";
+import { LangToggle, useT } from "@/lib/i18n";
 
 const subscribeHash = (cb: () => void) => {
   window.addEventListener("hashchange", cb);
@@ -18,6 +19,7 @@ const subscribeHash = (cb: () => void) => {
 };
 
 export default function SharePage() {
+  const t = useT();
   const { state } = useStore();
   const token = useSyncExternalStore(subscribeHash, () => window.location.hash.slice(1), () => null);
   const [missing, setMissing] = useState(false);
@@ -44,27 +46,30 @@ export default function SharePage() {
         <Link href="/">
           <Logo />
         </Link>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <LangToggle />
+          <ThemeToggle />
+        </div>
       </header>
       <main className="flex flex-1 items-start justify-center px-4 pt-8 pb-16 sm:pt-16">
         <Card className="w-full max-w-md">
           {"error" in result ? (
-            <EmptyState icon={LinkIcon} title="Link unavailable" text={result.error} action={<Link href="/" className="text-sm font-medium text-accent underline">Go to Atlas Portal</Link>} />
+            <EmptyState icon={LinkIcon} title={t("Link unavailable")} text={t(result.error)} action={<Link href="/" className="text-sm font-medium text-accent underline">{t("Go to Atlas Portal")}</Link>} />
           ) : (
             <div className="p-6 text-center">
               <div className="mx-auto mb-4 grid size-12 place-items-center rounded-lg border border-border bg-surface-2">
                 <FileIcon file={result.file} className="size-7" />
               </div>
-              <p className="text-xs text-muted">{company?.name} shared a file</p>
+              <p className="text-xs text-muted">{t("{company} shared a file", { company: company?.name ?? "" })}</p>
               <h1 className="mt-1 text-lg font-semibold break-words">{result.file.name}</h1>
               <p className="mt-1 text-sm text-muted">
-                {formatBytes(result.file.size)} · link expires {formatDate(result.share.expiresAt)}
+                {formatBytes(result.file.size)} · {t("link expires {date}", { date: formatDate(result.share.expiresAt) })}
               </p>
-              {missing && <p className="mt-4 text-sm text-danger">The file content is missing from this browser&apos;s storage.</p>}
+              {missing && <p className="mt-4 text-sm text-danger">{t("The file content is missing from this browser's storage.")}</p>}
               <Button variant="primary" className="mt-6 w-full" onClick={download}>
-                <Download className="size-4" /> Download
+                <Download className="size-4" /> {t("Download")}
               </Button>
-              <p className="mt-4 text-xs text-muted">Demo share link: it resolves from this browser&apos;s storage, so it only opens on the device that created it.</p>
+              <p className="mt-4 text-xs text-muted">{t("Demo share link: it resolves from this browser's storage, so it only opens on the device that created it.")}</p>
             </div>
           )}
         </Card>

@@ -4,19 +4,21 @@ import { CalendarDays, Download, FolderKanban, KanbanSquare, Table2 } from "luci
 import { useState } from "react";
 import { DataTable, type Column } from "@/components/data-table";
 import { useToast } from "@/components/toast";
-import { Avatar, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, ProgressRing, StatusIcon, cx, inputClass } from "@/components/ui";
+import { Avatar, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, ProgressRing, StatusIcon, cx, inputClass, STATUS_NAME } from "@/components/ui";
 import { log, updateProject } from "@/lib/api";
 import { downloadCsv, toCsv } from "@/lib/csv";
-import { formatDate, formatMoney } from "@/lib/format";
+import { formatDate, formatMoney, uiLocale } from "@/lib/format";
 import { PROJECT_STATUS_ORDER } from "@/lib/stats";
 import { mutate, useStore } from "@/lib/store";
 import type { Project, ProjectStatus } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 type Row = Project & { company: string; owner: string };
 
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const shortDate = (iso: string) => new Date(iso).toLocaleDateString(uiLocale(), { month: "short", day: "numeric" });
 
 function Board({ rows, isAdmin, onOpen }: { rows: Row[]; isAdmin: boolean; onOpen?: (p: Project) => void }) {
+  const t = useT();
   const [now] = useState(() => Date.now());
   return (
     <div className="-mx-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
@@ -24,15 +26,15 @@ function Board({ rows, isAdmin, onOpen }: { rows: Row[]; isAdmin: boolean; onOpe
         {PROJECT_STATUS_ORDER.map((status) => {
           const list = rows.filter((r) => r.status === status).sort((a, b) => a.dueDate.localeCompare(b.dueDate));
           return (
-            <section key={status} aria-label={`${status} projects`} className="flex min-w-0 flex-col">
+            <section key={status} aria-label={t("{status} projects", { status: t(STATUS_NAME[status]) })} className="flex min-w-0 flex-col">
               <header className="flex h-9 items-center gap-2 px-1">
                 <StatusIcon status={status} />
-                <h2 className="font-medium capitalize">{status.replace("-", " ")}</h2>
+                <h2 className="font-medium">{t(STATUS_NAME[status])}</h2>
                 <span className="text-muted tabular-nums">{list.length}</span>
                 <span className="ml-auto text-xs text-faint tabular-nums">{formatMoney(list.reduce((s, p) => s + p.budget, 0))}</span>
               </header>
               <ul className="flex flex-1 flex-col gap-1.5 rounded-lg bg-surface-2/60 p-1.5">
-                {list.length === 0 && <li className="px-3 py-8 text-center text-xs text-faint">No projects</li>}
+                {list.length === 0 && <li className="px-3 py-8 text-center text-xs text-faint">{t("No projects")}</li>}
                 {list.map((p) => {
                   const late = Date.parse(p.dueDate) < now && p.status !== "completed";
                   const body = (
@@ -47,7 +49,7 @@ function Board({ rows, isAdmin, onOpen }: { rows: Row[]; isAdmin: boolean; onOpe
                         </span>
                       </span>
                       <span className="mt-3 flex items-center gap-2 text-xs text-muted">
-                        <ProgressRing value={p.progress} label={`${p.name} progress`} size={14} />
+                        <ProgressRing value={p.progress} label={t("{name} progress", { name: p.name })} size={14} />
                         <span className="ml-auto inline-flex items-center gap-1 rounded border border-border px-1.5 py-px tabular-nums">
                           <CalendarDays className={cx("size-3", late && "text-danger")} aria-hidden />
                           <span className={late ? "text-danger" : ""}>{shortDate(p.dueDate)}</span>
@@ -78,6 +80,7 @@ function Board({ rows, isAdmin, onOpen }: { rows: Row[]; isAdmin: boolean; onOpe
 }
 
 export default function ProjectsPage() {
+  const t = useT();
   const { state, user } = useStore();
   const { toast, run } = useToast();
   const [editId, setEditId] = useState<string | null>(null);
@@ -111,9 +114,9 @@ export default function ProjectsPage() {
       ),
     },
     { key: "status", header: "Status", sortable: true, sortValue: (p) => PROJECT_STATUS_ORDER.indexOf(p.status), render: (p) => (
-        <span className="inline-flex items-center gap-2 whitespace-nowrap capitalize">
+        <span className="inline-flex items-center gap-2 whitespace-nowrap">
           <StatusIcon status={p.status} />
-          {p.status.replace("-", " ")}
+          {t(STATUS_NAME[p.status])}
         </span>
       ) },
     {
@@ -123,7 +126,7 @@ export default function ProjectsPage() {
       className: "min-w-36",
       render: (p) => (
         <div className="flex items-center gap-2">
-          <Meter value={p.progress} max={100} label={`${p.name} progress`} warn={false} />
+          <Meter value={p.progress} max={100} label={t("{name} progress", { name: p.name })} warn={false} />
           <span className="w-9 text-right text-xs tabular-nums">{p.progress}%</span>
         </div>
       ),
@@ -154,10 +157,10 @@ export default function ProjectsPage() {
   return (
     <>
       <PageHeader
-        title="Projects"
-        description={isAdmin ? `${rows.length} client projects, ${formatMoney(rows.filter((p) => p.status !== "completed").reduce((s, p) => s + p.budget, 0))} in open budget. Click one to update it.` : "Projects for your company."}
+        title={t("Projects")}
+        description={isAdmin ? t("{n} client projects, {budget} in open budget. Click one to update it.", { n: rows.length, budget: formatMoney(rows.filter((p) => p.status !== "completed").reduce((s, p) => s + p.budget, 0)) }) : t("Projects for your company.")}
         actions={
-          <div role="group" aria-label="View" className="inline-flex h-8 items-center rounded-md border border-border bg-surface p-0.5 shadow-card">
+          <div role="group" aria-label={t("View")} className="inline-flex h-8 items-center rounded-md border border-border bg-surface p-0.5 shadow-card">
             {(
               [
                 ["board", "Board", KanbanSquare],
@@ -165,7 +168,7 @@ export default function ProjectsPage() {
               ] as const
             ).map(([v, label, Icon]) => (
               <button key={v} aria-pressed={view === v} onClick={() => setView(v)} className={cx("inline-flex h-full items-center gap-1.5 rounded-[5px] px-2.5 text-xs font-medium transition-colors", view === v ? "bg-surface-3 text-text" : "text-muted hover:text-text")}>
-                <Icon className="size-3.5" aria-hidden /> {label}
+                <Icon className="size-3.5" aria-hidden /> {t(label)}
               </button>
             ))}
           </div>
@@ -176,7 +179,7 @@ export default function ProjectsPage() {
       ) : (
         <Card>
           <DataTable
-            label="Projects"
+            label={t("Projects")}
             rows={rows}
             columns={columns}
             rowKey={(p) => p.id}
@@ -190,10 +193,10 @@ export default function ProjectsPage() {
             onRowClick={isAdmin ? startEdit : undefined}
             toolbar={(visible) => (
               <Button size="sm" onClick={() => exportCsv(visible)} disabled={visible.length === 0}>
-                <Download className="size-4" /> Export CSV
+                <Download className="size-4" /> {t("Export CSV")}
               </Button>
             )}
-            empty={<EmptyState icon={FolderKanban} title="No projects match" text="Try a different search or clear the filters." />}
+            empty={<EmptyState icon={FolderKanban} title={t("No projects match")} text={t("Try a different search or clear the filters.")} />}
           />
         </Card>
       )}
@@ -201,10 +204,10 @@ export default function ProjectsPage() {
       <Modal
         open={!!editing}
         onClose={() => setEditId(null)}
-        title={editing ? `Update ${editing.name}` : ""}
+        title={editing ? t("Update {name}", { name: editing.name }) : ""}
         footer={
           <>
-            <Button onClick={() => setEditId(null)}>Cancel</Button>
+            <Button onClick={() => setEditId(null)}>{t("Cancel")}</Button>
             <Button
               variant="primary"
               onClick={() => {
@@ -213,14 +216,14 @@ export default function ProjectsPage() {
                 setEditId(null);
               }}
             >
-              Save
+              {t("Save")}
             </Button>
           </>
         }
       >
         {editing && draft && (
           <div className="space-y-4">
-            <Field label="Status">
+            <Field label={t("Status")}>
               {(id) => (
                 <select id={id} className={inputClass} value={draft.status} onChange={(e) => setDraft({ ...draft, status: e.target.value as ProjectStatus, progress: e.target.value === "completed" ? 100 : draft.progress })}>
                   {PROJECT_STATUS_ORDER.map((s) => (
@@ -231,10 +234,10 @@ export default function ProjectsPage() {
                 </select>
               )}
             </Field>
-            <Field label={`Progress: ${draft.progress}%`}>
+            <Field label={t("Progress: {n}%", { n: draft.progress })}>
               {(id) => <input id={id} type="range" min={0} max={100} step={5} value={draft.progress} onChange={(e) => setDraft({ ...draft, progress: Number(e.target.value) })} className="w-full accent-[var(--accent)]" />}
             </Field>
-            <Field label="Owner">
+            <Field label={t("Owner")}>
               {(id) => (
                 <select id={id} className={inputClass} value={draft.ownerId} onChange={(e) => setDraft({ ...draft, ownerId: e.target.value })}>
                   {admins.map((a) => (

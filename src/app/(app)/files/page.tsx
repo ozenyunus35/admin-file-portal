@@ -13,6 +13,7 @@ import { formatBytes, formatDateTime } from "@/lib/format";
 import { randomId } from "@/lib/ids";
 import { getState, mutate, setState, useStore } from "@/lib/store";
 import type { DemoState, FileItem, User } from "@/lib/types";
+import { useT } from "@/lib/i18n";
 
 interface UploadJob {
   key: string;
@@ -73,6 +74,7 @@ function useUploads(user: User) {
 }
 
 function DropZone({ disabled, onFiles }: { disabled?: boolean; onFiles: (files: FileList) => void }) {
+  const t = useT();
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   return (
@@ -92,18 +94,18 @@ function DropZone({ disabled, onFiles }: { disabled?: boolean; onFiles: (files: 
     >
       <UploadCloud className={cx("size-5", over ? "text-accent" : "text-faint")} aria-hidden />
       <p className="mt-2 text-sm font-medium">
-        <span className="hidden sm:inline">Drag and drop files here, or </span>
+        <span className="hidden sm:inline">{t("Drag and drop files here, or")} </span>
         <button type="button" onClick={() => input.current?.click()} disabled={disabled} className="text-accent underline underline-offset-2 disabled:opacity-50">
-          browse<span className="sm:hidden"> files to upload</span>
+          {t("browse")}<span className="sm:hidden"> {t("files to upload")}</span>
         </button>
       </p>
-      <p className="mt-1 text-xs text-muted">Up to {MAX_UPLOAD_BYTES / 1024 ** 2} MB per file. Images, PDFs and text files get a preview.</p>
+      <p className="mt-1 text-xs text-muted">{t("Up to {n} MB per file. Images, PDFs and text files get a preview.", { n: MAX_UPLOAD_BYTES / 1024 ** 2 })}</p>
       <input
         ref={input}
         type="file"
         multiple
         className="sr-only"
-        aria-label="Upload files"
+        aria-label={t("Upload files")}
         tabIndex={-1}
         onChange={(e) => {
           if (e.target.files?.length) onFiles(e.target.files);
@@ -115,14 +117,15 @@ function DropZone({ disabled, onFiles }: { disabled?: boolean; onFiles: (files: 
 }
 
 function UploadQueue({ jobs, onClear }: { jobs: UploadJob[]; onClear: () => void }) {
+  const t = useT();
   if (jobs.length === 0) return null;
   return (
     <Card className="mt-3">
       <div className="flex items-center justify-between border-b border-border px-4 py-2">
-        <h2 className="text-sm font-medium">Uploads</h2>
+        <h2 className="text-sm font-medium">{t("Uploads")}</h2>
         {jobs.some((j) => j.status !== "uploading") && (
           <button onClick={onClear} className="text-xs text-muted hover:text-text">
-            Clear finished
+            {t("Clear finished")}
           </button>
         )}
       </div>
@@ -130,8 +133,8 @@ function UploadQueue({ jobs, onClear }: { jobs: UploadJob[]; onClear: () => void
         {jobs.map((j) => (
           <li key={j.key} className="px-4 py-2.5 text-sm">
             <div className="flex items-center gap-2">
-              {j.status === "done" && <CheckCircle2 className="size-4 shrink-0 text-success" aria-label="Uploaded" />}
-              {j.status === "error" && <AlertCircle className="size-4 shrink-0 text-danger" aria-label="Failed" />}
+              {j.status === "done" && <CheckCircle2 className="size-4 shrink-0 text-success" aria-label={t("Uploaded")} />}
+              {j.status === "error" && <AlertCircle className="size-4 shrink-0 text-danger" aria-label={t("Failed")} />}
               <span className="min-w-0 flex-1 truncate">{j.name}</span>
               <span className="shrink-0 text-xs text-muted tabular-nums">{j.status === "uploading" ? `${Math.round(j.progress)}%` : j.status === "done" ? formatBytes(j.size) : ""}</span>
             </div>
@@ -140,7 +143,7 @@ function UploadQueue({ jobs, onClear }: { jobs: UploadJob[]; onClear: () => void
                 <div className="h-full rounded-full bg-accent transition-[width] duration-100" style={{ width: `${j.progress}%` }} />
               </div>
             )}
-            {j.error && <p className="mt-1 text-xs text-danger">{j.error}</p>}
+            {j.error && <p className="mt-1 text-xs text-danger">{t(j.error)}</p>}
           </li>
         ))}
       </ul>
@@ -149,6 +152,7 @@ function UploadQueue({ jobs, onClear }: { jobs: UploadJob[]; onClear: () => void
 }
 
 function FilePortal({ state, user }: { state: DemoState; user: User }) {
+  const t = useT();
   const params = useSearchParams();
   const router = useRouter();
   const { run } = useToast();
@@ -172,7 +176,7 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
 
   const used = storageUsed(state, companyId);
   const files = state.files.filter((f) => f.folderId === folderId);
-  const userName = (id: string) => state.users.find((u) => u.id === id)?.name ?? "Unknown";
+  const userName = (id: string) => state.users.find((u) => u.id === id)?.name ?? t("Unknown");
   const rows = files.map((f) => ({ ...f, uploader: userName(f.uploadedBy) }));
   type Row = (typeof rows)[number];
 
@@ -243,12 +247,12 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
   return (
     <>
       <PageHeader
-        title="Files"
-        description={isAdmin ? "Shared files for each client, organised in folders." : `Shared files for ${company.name}.`}
+        title={t("Files")}
+        description={isAdmin ? t("Shared files for each client, organised in folders.") : t("Shared files for {name}.", { name: company.name })}
         actions={
           isAdmin && (
             <select
-              aria-label="Client"
+              aria-label={t("Client")}
               value={companyId}
               onChange={(e) => {
                 setFolderSel(null);
@@ -268,20 +272,20 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
 
       <Card className="mb-6 p-4">
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2 text-sm">
-          <span className="font-medium">Storage</span>
+          <span className="font-medium">{t("Storage")}</span>
           <span className="text-muted tabular-nums" data-testid="storage-usage">
-            {formatBytes(used)} of {formatBytes(company.quota)} used · {company.plan} plan
+            {t("{used} of {quota} used · {plan} plan", { used: formatBytes(used), quota: formatBytes(company.quota), plan: t(company.plan) })}
           </span>
         </div>
-        <Meter value={used} max={company.quota} label={`${company.name} storage used`} />
-        {used / company.quota >= 0.85 && <p className="mt-2 text-xs text-warning">Storage is almost full. Delete old files or upgrade the plan.</p>}
+        <Meter value={used} max={company.quota} label={t("{name} storage used", { name: company.name })} />
+        {used / company.quota >= 0.85 && <p className="mt-2 text-xs text-warning">{t("Storage is almost full. Delete old files or upgrade the plan.")}</p>}
       </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
-        <nav aria-label="Folders" className="min-w-0">
+        <nav aria-label={t("Folders")} className="min-w-0">
           <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-xs font-medium text-faint">Folders</h2>
-            <button onClick={() => (setNewFolder(""), setFolderError(undefined))} className="rounded-md p-1 text-muted hover:bg-surface-2 hover:text-text" aria-label="New folder">
+            <h2 className="text-xs font-medium text-faint">{t("Folders")}</h2>
+            <button onClick={() => (setNewFolder(""), setFolderError(undefined))} className="rounded-md p-1 text-muted hover:bg-surface-2 hover:text-text" aria-label={t("New folder")}>
               <FolderPlus className="size-4" />
             </button>
           </div>
@@ -316,7 +320,7 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
             </div>
             <DataTable
               key={folderId}
-              label={`Files in ${folder?.name}`}
+              label={t("Files in {folder}", { folder: folder?.name ?? "" })}
               rows={rows}
               columns={columns}
               rowKey={(f) => f.id}
@@ -325,9 +329,9 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
               initialSort={{ key: "createdAt", dir: "desc" }}
               empty={
                 files.length === 0 ? (
-                  <EmptyState icon={UploadCloud} title="This folder is empty" text="Drop files above to upload them to this folder." />
+                  <EmptyState icon={UploadCloud} title={t("This folder is empty")} text={t("Drop files above to upload them to this folder.")} />
                 ) : (
-                  <EmptyState icon={Folder} title="No files match" text="Try a different search." />
+                  <EmptyState icon={Folder} title={t("No files match")} text={t("Try a different search.")} />
                 )
               }
             />
@@ -341,10 +345,10 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
       <Modal
         open={!!deleting}
         onClose={() => setDeleting(null)}
-        title="Delete file?"
+        title={t("Delete file?")}
         footer={
           <>
-            <Button onClick={() => setDeleting(null)}>Cancel</Button>
+            <Button onClick={() => setDeleting(null)}>{t("Cancel")}</Button>
             <Button
               variant="danger"
               onClick={() => {
@@ -355,19 +359,19 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
                 setDeleting(null);
               }}
             >
-              <Trash2 className="size-4" /> Delete
+              <Trash2 className="size-4" /> {t("Delete")}
             </Button>
           </>
         }
       >
         <p className="text-sm text-muted">
-          <span className="font-medium text-text">{deleting?.name}</span> and its share links will be removed. This can&apos;t be undone (except by resetting the demo).
+          <span className="font-medium text-text">{deleting?.name}</span> {t("and its share links will be removed. This can't be undone (except by resetting the demo).")}
         </p>
       </Modal>
 
-      <Modal open={newFolder !== null} onClose={() => setNewFolder(null)} title="New folder">
+      <Modal open={newFolder !== null} onClose={() => setNewFolder(null)} title={t("New folder")}>
         <form onSubmit={submitFolder} noValidate className="space-y-4">
-          <Field label="Folder name" error={folderError}>
+          <Field label={t("Folder name")} error={folderError}>
             {(id, d) => (
               <input
                 id={id}
@@ -383,10 +387,10 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
           </Field>
           <div className="flex justify-end gap-2">
             <Button type="button" onClick={() => setNewFolder(null)}>
-              <X className="size-4" /> Cancel
+              <X className="size-4" /> {t("Cancel")}
             </Button>
             <Button type="submit" variant="primary">
-              Create folder
+              {t("Create folder")}
             </Button>
           </div>
         </form>

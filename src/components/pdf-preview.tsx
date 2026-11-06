@@ -3,6 +3,7 @@
 import { FileText, Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { EmptyState } from "./ui";
+import { useT } from "@/lib/i18n";
 
 const MAX_PAGES = 5;
 
@@ -11,6 +12,7 @@ const MAX_PAGES = 5;
  * lot in inline PDF support (Android Chrome has none), so we don't rely on it.
  */
 export function PdfPreview({ blob, name }: { blob: Blob; name: string }) {
+  const t = useT();
   const host = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [pages, setPages] = useState(0);
@@ -60,18 +62,18 @@ export function PdfPreview({ blob, name }: { blob: Blob; name: string }) {
     };
   }, [blob, name]);
 
-  if (status === "error") return <EmptyState icon={FileText} title="Couldn't render this PDF" text="The file may be damaged or password-protected. Download it to open it on your device." />;
+  if (status === "error") return <EmptyState icon={FileText} title={t("Couldn't render this PDF")} text={t("The file may be damaged or password-protected. Download it to open it on your device.")} />;
 
   return (
     <div className="max-h-[60vh] overflow-auto">
       {status === "loading" && (
         <div className="flex h-72 items-center justify-center text-muted" role="status">
           <Loader2 className="size-6 animate-spin" aria-hidden />
-          <span className="sr-only">Rendering PDF</span>
+          <span className="sr-only">{t("Rendering PDF")}</span>
         </div>
       )}
       <div ref={host} className="p-4" data-testid="pdf-pages" />
-      {status === "ready" && pages > MAX_PAGES && <p className="pb-4 text-center text-xs text-muted">Showing the first {MAX_PAGES} of {pages} pages. Download the file to see the rest.</p>}
+      {status === "ready" && pages > MAX_PAGES && <p className="pb-4 text-center text-xs text-muted">{t("Showing the first {n} of {total} pages. Download the file to see the rest.", { n: MAX_PAGES, total: pages })}</p>}
     </div>
   );
 }

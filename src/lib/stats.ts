@@ -1,5 +1,6 @@
 import { storageUsed } from "./api";
 import type { DemoState, ProjectStatus } from "./types";
+import { uiLocale } from "./format";
 
 const DAY = 86_400_000;
 
@@ -31,7 +32,7 @@ export function uploadsByDay(state: DemoState, days = 30, now = new Date()): Arr
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const out = Array.from({ length: days }, (_, i) => {
     const d = new Date(end - (days - 1 - i) * DAY);
-    return { date: d.toISOString().slice(0, 10), label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), uploads: 0, start: d.getTime() };
+    return { date: d.toISOString().slice(0, 10), label: d.toLocaleDateString(uiLocale(), { month: "short", day: "numeric" }), uploads: 0, start: d.getTime() };
   });
   for (const f of state.files) {
     const t = Date.parse(f.createdAt);
@@ -68,7 +69,7 @@ export function trendByDay(state: DemoState, days = 30, now = new Date(), compan
   const start = end - (days - 1) * DAY;
   const out = Array.from({ length: days }, (_, i) => {
     const d = new Date(start + i * DAY);
-    return { date: d.toISOString().slice(0, 10), label: d.toLocaleDateString("en-US", { month: "short", day: "numeric" }), uploads: 0, logins: 0 };
+    return { date: d.toISOString().slice(0, 10), label: d.toLocaleDateString(uiLocale(), { month: "short", day: "numeric" }), uploads: 0, logins: 0 };
   });
   const slot = (iso: string) => {
     const idx = Math.floor((Date.parse(iso) - start) / DAY);
