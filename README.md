@@ -68,6 +68,8 @@ You can also sign in with any seeded email, for example `daniel@atlasportal.exam
 | ![Users](docs/users.png) | ![Light theme](docs/light.png) |
 | **File portal** | **PDF preview** |
 | ![Files](docs/files.png) | ![Preview](docs/preview.png) |
+| **In Turkish** | **Activity log** |
+| ![Dashboard in Turkish](docs/turkish.png) | ![Activity log with filters and CSV export](docs/activity.png) |
 
 <p align="center"><img src="docs/mobile.png" width="260" alt="Client dashboard on a phone"> <img src="docs/mobile-files.png" width="260" alt="File portal on a phone"></p>
 

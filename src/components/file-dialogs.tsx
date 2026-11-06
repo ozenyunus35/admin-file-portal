@@ -277,7 +277,7 @@ function ImagePreview({ url, name }: { url: string; name: string }) {
       <EmptyState
         icon={FileImage}
         title={t("This image can't be shown in the browser")}
-        text={`${name.split(".").pop()?.toUpperCase() ?? "This"} photos (common from iPhones and scanners) aren't supported by web browsers. Download it to open it on your device.`}
+        text={t("{type} photos (common from iPhones and scanners) aren't supported by web browsers. Download it to open it on your device.", { type: name.split(".").pop()?.toUpperCase() ?? "" })}
       />
     );
   // eslint-disable-next-line @next/next/no-img-element

@@ -406,4 +406,6 @@ export const TR: Record<string, string> = {
   "No demo account uses this email. Try one of the buttons above.": "Bu e-postayı kullanan bir demo hesabı yok. Yukarıdaki düğmelerden birini deneyin.",
   "This account is disabled. An admin can re-enable it on the Users page.": "Bu hesap devre dışı. Bir yönetici Kullanıcılar sayfasından yeniden etkinleştirebilir.",
   "This client's portal is paused. An admin can reactivate it on the Clients page.": "Bu müşterinin portalı durduruldu. Bir yönetici Müşteriler sayfasından yeniden etkinleştirebilir.",
+  "{type} photos (common from iPhones and scanners) aren't supported by web browsers. Download it to open it on your device.":
+    "{type} fotoğrafları (iPhone'larda ve belge tarayıcılarında yaygın) web tarayıcılarında desteklenmez. Cihazınızda açmak için indirin.",
 };
