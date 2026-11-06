@@ -2,7 +2,7 @@
 
 import { Loader2, X } from "lucide-react";
 import { forwardRef, useEffect, useId, useRef } from "react";
-import { initials } from "@/lib/format";
+import { formatPercent, initials } from "@/lib/format";
 import type { ProjectStatus } from "@/lib/types";
 import { useT } from "@/lib/i18n";
 
@@ -258,7 +258,7 @@ export function Delta({ current, previous, label = "vs previous 7 days" }: { cur
     <span className="text-xs text-muted" title={label}>
       <span className={cx("font-medium tabular-nums", pct > 0 ? "text-success" : pct < 0 ? "text-danger" : "text-muted")}>
         {pct > 0 ? "+" : ""}
-        {pct}%
+        {formatPercent(pct)}
       </span>{" "}
       <span className="hidden sm:inline">{label}</span>
     </span>
@@ -275,7 +275,7 @@ export function ProgressRing({ value, size = 16, stroke = 2, label }: { value: n
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--surface-3)" strokeWidth={stroke} />
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={value >= 100 ? "var(--status-done)" : "var(--muted)"} strokeWidth={stroke} strokeDasharray={c} strokeDashoffset={c * (1 - value / 100)} />
       </svg>
-      {value}%
+      {formatPercent(value)}
     </span>
   );
 }

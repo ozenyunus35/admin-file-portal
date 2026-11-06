@@ -7,7 +7,7 @@ import { useToast } from "@/components/toast";
 import { Avatar, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, ProgressRing, StatusIcon, cx, inputClass, STATUS_NAME } from "@/components/ui";
 import { log, updateProject } from "@/lib/api";
 import { downloadCsv, toCsv } from "@/lib/csv";
-import { formatDate, formatMoney, uiLocale } from "@/lib/format";
+import { formatDate, formatMoney, formatPercent, uiLocale } from "@/lib/format";
 import { PROJECT_STATUS_ORDER } from "@/lib/stats";
 import { mutate, useStore } from "@/lib/store";
 import type { Project, ProjectStatus } from "@/lib/types";
@@ -127,7 +127,7 @@ export default function ProjectsPage() {
       render: (p) => (
         <div className="flex items-center gap-2">
           <Meter value={p.progress} max={100} label={t("{name} progress", { name: p.name })} warn={false} />
-          <span className="w-9 text-right text-xs tabular-nums">{p.progress}%</span>
+          <span className="w-9 text-right text-xs tabular-nums">{formatPercent(p.progress)}</span>
         </div>
       ),
     },

@@ -7,6 +7,9 @@ export function setFormatLocale(next: "en" | "tr") {
 export const uiLang = () => lang;
 export const uiLocale = () => (lang === "tr" ? "tr-TR" : "en-US");
 
+/** 30% in English, %30 in Turkish; negative values keep the sign in front (-%5). */
+export const formatPercent = (n: number) => (lang === "tr" ? `${n < 0 ? "-" : ""}%${Math.abs(n)}` : `${n}%`);
+
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB", "TB"];

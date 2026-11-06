@@ -9,7 +9,7 @@ import { useToast } from "@/components/toast";
 import { Avatar, Button, Card, EmptyState, Field, Meter, Modal, PageHeader, Spinner, cx, inputClass } from "@/components/ui";
 import { ApiError, MAX_UPLOAD_BYTES, addFile, canDeleteFile, checkUpload, cleanFileName, createFolder, deleteFile, storageUsed, uniqueName } from "@/lib/api";
 import { deleteBlob, putBlob } from "@/lib/blobs";
-import { formatBytes, formatDateTime } from "@/lib/format";
+import { formatBytes, formatDateTime, formatPercent } from "@/lib/format";
 import { randomId } from "@/lib/ids";
 import { getState, mutate, setState, useStore } from "@/lib/store";
 import type { DemoState, FileItem, User } from "@/lib/types";
@@ -137,7 +137,7 @@ function UploadQueue({ jobs, onClear }: { jobs: UploadJob[]; onClear: () => void
               {j.status === "done" && <CheckCircle2 className="size-4 shrink-0 text-success" aria-label={t("Uploaded")} />}
               {j.status === "error" && <AlertCircle className="size-4 shrink-0 text-danger" aria-label={t("Failed")} />}
               <span className="min-w-0 flex-1 truncate">{j.name}</span>
-              <span className="shrink-0 text-xs text-muted tabular-nums">{j.status === "uploading" ? `${Math.round(j.progress)}%` : j.status === "done" ? formatBytes(j.size) : ""}</span>
+              <span className="shrink-0 text-xs text-muted tabular-nums">{j.status === "uploading" ? formatPercent(Math.round(j.progress)) : j.status === "done" ? formatBytes(j.size) : ""}</span>
             </div>
             {j.status === "uploading" && (
               <div role="progressbar" aria-label={t("Uploading {name}", { name: j.name })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(j.progress)} className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">

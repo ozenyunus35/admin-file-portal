@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildPdf, buildZip, crc32, previewKind } from "@/lib/content";
 import { toCsv } from "@/lib/csv";
-import { formatBytes, initials, timeAgo } from "@/lib/format";
+import { formatBytes, formatPercent, initials, setFormatLocale, timeAgo } from "@/lib/format";
 import { queryTable } from "@/lib/query";
 import { createSeed } from "@/lib/seed";
 import { kpis, projectsByStatus, uploadsByDay } from "@/lib/stats";
@@ -105,5 +105,15 @@ describe("stats", () => {
     expect(k.filesLast30).toBe(s.files.length);
     expect(k.openProjects).toBe(s.projects.filter((p) => p.status !== "completed").length);
     expect(projectsByStatus(s).reduce((n, x) => n + x.count, 0)).toBe(s.projects.length);
+  });
+});
+
+describe("formatPercent", () => {
+  it("puts the sign after the number in English and before it in Turkish", () => {
+    expect(formatPercent(30)).toBe("30%");
+    setFormatLocale("tr");
+    expect(formatPercent(30)).toBe("%30");
+    expect(formatPercent(-5)).toBe("-%5");
+    setFormatLocale("en");
   });
 });
