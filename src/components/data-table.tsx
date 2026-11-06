@@ -88,7 +88,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, searchKeys, searchP
                 setPage(1);
               }}
               placeholder={t(searchPlaceholder)}
-              aria-label={searchPlaceholder}
+              aria-label={t(searchPlaceholder)}
               className={cx(inputClass, "pl-9")}
             />
           </div>

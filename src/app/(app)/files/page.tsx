@@ -96,7 +96,8 @@ function DropZone({ disabled, onFiles }: { disabled?: boolean; onFiles: (files: 
       <p className="mt-2 text-sm font-medium">
         <span className="hidden sm:inline">{t("Drag and drop files here, or")} </span>
         <button type="button" onClick={() => input.current?.click()} disabled={disabled} className="text-accent underline underline-offset-2 disabled:opacity-50">
-          {t("browse")}<span className="sm:hidden"> {t("files to upload")}</span>
+          <span className="hidden sm:inline">{t("browse")}</span>
+          <span className="sm:hidden">{t("Choose files to upload")}</span>
         </button>
       </p>
       <p className="mt-1 text-xs text-muted">{t("Up to {n} MB per file. Images, PDFs and text files get a preview.", { n: MAX_UPLOAD_BYTES / 1024 ** 2 })}</p>

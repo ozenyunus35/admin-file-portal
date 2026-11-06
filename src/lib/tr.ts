@@ -191,7 +191,7 @@ export const TR: Record<string, string> = {
   // Files
   "Drag and drop files here, or": "Dosyaları buraya sürükleyin ya da",
   browse: "göz atın",
-  "files to upload": "yüklenecek dosyalar",
+  "Choose files to upload": "Yüklenecek dosyaları seçin",
   "Up to {n} MB per file. Images, PDFs and text files get a preview.": "Dosya başına en fazla {n} MB. Görseller, PDF'ler ve metin dosyaları önizlenir.",
   "Upload files": "Dosya yükle",
   "Clear finished": "Bitenleri temizle",
