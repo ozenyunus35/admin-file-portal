@@ -127,15 +127,15 @@ export default function UsersPage() {
       className: "text-right",
       render: (u) => (
         <div className="flex justify-end gap-1">
-          <button onClick={() => setEditing(u)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={`Edit ${u.name}`}>
+          <button onClick={() => setEditing(u)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={t("Edit {name}", { name: u.name })}>
             <Pencil className="size-4" />
           </button>
           {u.status === "disabled" ? (
-            <button onClick={() => run(() => mutate((s) => setUserStatus(s, me, u.id, "active")), `${u.name} was re-enabled.`)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-success" aria-label={`Enable ${u.name}`}>
+            <button onClick={() => run(() => mutate((s) => setUserStatus(s, me, u.id, "active")), `${u.name} was re-enabled.`)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-success" aria-label={t("Enable {name}", { name: u.name })}>
               <UserCheck className="size-4" />
             </button>
           ) : (
-            <button onClick={() => run(() => mutate((s) => setUserStatus(s, me, u.id, "disabled")), `${u.name} was disabled.`)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-danger" aria-label={`Disable ${u.name}`}>
+            <button onClick={() => run(() => mutate((s) => setUserStatus(s, me, u.id, "disabled")), `${u.name} was disabled.`)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-danger" aria-label={t("Disable {name}", { name: u.name })}>
               <UserX className="size-4" />
             </button>
           )}

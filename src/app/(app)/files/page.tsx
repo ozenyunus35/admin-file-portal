@@ -139,7 +139,7 @@ function UploadQueue({ jobs, onClear }: { jobs: UploadJob[]; onClear: () => void
               <span className="shrink-0 text-xs text-muted tabular-nums">{j.status === "uploading" ? `${Math.round(j.progress)}%` : j.status === "done" ? formatBytes(j.size) : ""}</span>
             </div>
             {j.status === "uploading" && (
-              <div role="progressbar" aria-label={`Uploading ${j.name}`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(j.progress)} className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
+              <div role="progressbar" aria-label={t("Uploading {name}", { name: j.name })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(j.progress)} className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-2">
                 <div className="h-full rounded-full bg-accent transition-[width] duration-100" style={{ width: `${j.progress}%` }} />
               </div>
             )}
@@ -213,17 +213,17 @@ function FilePortal({ state, user }: { state: DemoState; user: User }) {
       className: "text-right",
       render: (f) => (
         <div className="flex justify-end gap-0.5">
-          <button onClick={() => setPreviewing(f)} className="hidden rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text sm:block" aria-label={`Preview ${f.name}`}>
+          <button onClick={() => setPreviewing(f)} className="hidden rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text sm:block" aria-label={t("Preview {name}", { name: f.name })}>
             <Eye className="size-4" />
           </button>
-          <button onClick={() => download(f)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={`Download ${f.name}`}>
+          <button onClick={() => download(f)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={t("Download {name}", { name: f.name })}>
             <Download className="size-4" />
           </button>
-          <button onClick={() => setSharing(f)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={`Share ${f.name}`}>
+          <button onClick={() => setSharing(f)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-text" aria-label={t("Share {name}", { name: f.name })}>
             <Link2 className="size-4" />
           </button>
           {canDeleteFile(user, f) && (
-            <button onClick={() => setDeleting(f)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-danger" aria-label={`Delete ${f.name}`}>
+            <button onClick={() => setDeleting(f)} className="rounded-md p-1.5 text-muted hover:bg-surface-2 hover:text-danger" aria-label={t("Delete {name}", { name: f.name })}>
               <Trash2 className="size-4" />
             </button>
           )}

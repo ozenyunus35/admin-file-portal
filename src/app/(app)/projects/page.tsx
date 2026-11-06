@@ -61,7 +61,7 @@ function Board({ rows, isAdmin, onOpen }: { rows: Row[]; isAdmin: boolean; onOpe
                   return (
                     <li key={p.id}>
                       {onOpen ? (
-                        <button onClick={() => onOpen(p)} className={cls} aria-label={`Update ${p.name}${isAdmin ? `, ${p.company}` : ""}`}>
+                        <button onClick={() => onOpen(p)} className={cls} aria-label={t("Update {name}", { name: isAdmin ? `${p.name}, ${p.company}` : p.name })}>
                           {body}
                         </button>
                       ) : (

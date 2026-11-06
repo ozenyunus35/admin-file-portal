@@ -38,7 +38,7 @@ export default function ClientsPage() {
             return (
               <li key={c.id}>
                 <Card className="flex h-full flex-col p-0 transition-colors duration-100 hover:border-border-strong">
-                  <button onClick={() => setOpenId(c.id)} className="flex flex-1 flex-col rounded-lg p-4 text-left" aria-label={`Open ${c.name}`}>
+                  <button onClick={() => setOpenId(c.id)} className="flex flex-1 flex-col rounded-lg p-4 text-left" aria-label={t("Open {name}", { name: c.name })}>
                     <div className="flex w-full items-start gap-3">
                       <Avatar name={c.name} size={32} square />
                       <div className="min-w-0 flex-1">
